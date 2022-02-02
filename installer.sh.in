@@ -1458,12 +1458,13 @@ fi
 # main()
 #
 DIALOG --title "${BOLD}${RED} Enter the void ... ${RESET}" --msgbox "\n
-Welcome to the Void Linux installation. A simple and minimal \
-Linux distribution made from scratch and built from the source package tree \
-available for XBPS, a new alternative binary package system.\n\n
+Welcome to the Cereus Linux installation. A simple and minimal \
+Linux respin based on Void Linux which includes XBPS a new \
+alternative binary package system; with the purpose to provide an \
+user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
-please join us at ${BOLD}#voidlinux${RESET} on ${BOLD}irc.libera.chat${RESET}.\n\n
-${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
+please create any issue at ${BOLD}https://github.com/cereuslinux/cereus-mklive${RESET}.\n\n
+Also, we recommend to read the official Void documentation: ${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
 
 while true; do
     menu
