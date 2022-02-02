@@ -33,7 +33,7 @@ readonly LXQT_PKGS="$X_PKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 qupzilla"
 
 readonly CEREUS_BASEPKGS="lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings atril vlc guvcview qbittorrent simple-scan ristretto neofetch htop octoxbps firefox rhythmbox nano mousepad void-repo-nonfree accountsservice qt5ct evince galculator-gtk3"
 
-readonly CEREUS_INCLUDEDIR="$PWD/cereus_includedir/"
+readonly CEREUS_INCLUDEDIR="$PWD/includedir"
 
 [ ! -x mklive.sh ] && exit 0
 
@@ -44,7 +44,7 @@ if [ -z "$IMAGE" -o "$IMAGE" = base ]; then
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = xfce ]; then
 	if [ ! -e $XFCE_IMG ]; then
-		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR" -p "$XFCE_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -T "Cereus" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = cinnamon ]; then
