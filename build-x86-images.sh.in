@@ -24,41 +24,41 @@ readonly LXQT_IMG=cereus-live-${ARCH}-${DATE}-lxqt.iso
 
 readonly GRUB="grub-i386-efi grub-x86_64-efi"
 
-readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse $GRUB"
+readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse calamares $GRUB"
 readonly X_PKGS="$BASE_PKGS xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio"
 readonly XFCE_PKGS="$X_PKGS xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin"
 readonly CINNAMON_PKGS="$X_PKGS lxdm cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
 readonly KDE_PKGS="$X_PKGS kde5 konsole firefox dolphin"
-readonly LXQT_PKGS="$X_PKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 qupzilla"
+readonly LXQT_PKGS="$X_PKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2"
 
 readonly CEREUS_BASEPKGS="lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings atril vlc guvcview qbittorrent simple-scan ristretto neofetch htop octoxbps firefox rhythmbox nano mousepad void-repo-nonfree accountsservice qt5ct evince galculator-gtk3"
 
-readonly CEREUS_INCLUDEDIR="$PWD/includedir"
+readonly CEREUS_INCLUDEDIR="$PWD/includedir/lxqt"
 
 [ ! -x mklive.sh ] && exit 0
 
 if [ -z "$IMAGE" -o "$IMAGE" = base ]; then
 	if [ ! -e $BASE_IMG ]; then
-		./mklive.sh -a $ARCH -o $BASE_IMG -I "$CEREUS_INCLUDEDIR" -p "$BASE_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $BASE_IMG -I "$CEREUS_INCLUDEDIR" -p "$BASE_PKGS" ${REPO} -T "Cereus Linux" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = xfce ]; then
 	if [ ! -e $XFCE_IMG ]; then
-		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -T "Cereus Linux" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = cinnamon ]; then
 	if [ ! -e $CINNAMON_IMG ]; then
-		./mklive.sh -a $ARCH -o $CINNAMON_IMG -I "$CEREUS_INCLUDEDIR" -p "$CINNAMON_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $CINNAMON_IMG -I "$CEREUS_INCLUDEDIR" -p "$CINNAMON_PKGS" ${REPO} -T "Cereus Linux" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = lxqt ]; then
 	if [ ! -e $LXQT_IMG ]; then
-		./mklive.sh -a $ARCH -o $LXQT_IMG -I "$CEREUS_INCLUDEDIR" -p "$LXQT_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $LXQT_IMG -I "$CEREUS_INCLUDEDIR" -p "$LXQT_PKGS" ${REPO} -T "Cereus Linux LXQt" "$@"
 	fi
 fi
 if [ "$IMAGE" = kde ]; then
 	if [ ! -e $KDE_IMG ]; then
-		./mklive.sh -a $ARCH -o $KDE_IMG -I "$CEREUS_INCLUDEDIR" -p "$KDE_PKGS" ${REPO} -T "Cereus" "$@"
+		./mklive.sh -a $ARCH -o $KDE_IMG -I "$CEREUS_INCLUDEDIR" -p "$KDE_PKGS" -r "/xsrc/void-packages/hostdir/binpkgs/" ${REPO} -T "Cereus Linux" "$@"
 	fi
 fi
