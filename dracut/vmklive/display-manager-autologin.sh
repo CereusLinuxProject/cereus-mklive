@@ -32,9 +32,9 @@ fi
 
 # Configure lightdm autologin.
 if [ -r ${NEWROOT}/etc/lightdm.conf ]; then
-    sed -i -e "s|^\#\(default-user=\).*|\1$USERNAME|" \
+    sed -i -e "s|^\#\(autologin-user=\).*|\1$USERNAME|" \
         ${NEWROOT}/etc/lightdm.conf
-    sed -i -e "s|^\#\(default-user-timeout=\).*|\10|" \
+    sed -i -e "s|^\#\(autologin-user-timeout=\).*|\10|" \
         ${NEWROOT}/etc/lightdm.conf
 fi
 

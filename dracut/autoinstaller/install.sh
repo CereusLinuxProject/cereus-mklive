@@ -74,8 +74,8 @@ VAI_install_base_system() {
 VAI_prepare_chroot() {
     # Mount dev, bind, proc, etc into chroot
     mount -t proc proc "${target}/proc"
-    mount --rbind /sys "${target}/sys"
-    mount --rbind /dev "${target}/dev"
+    mount -t sysfs sys "${target}/sys"
+    mount -o rbind /dev "${target}/dev"
 }
 
 VAI_configure_sudo() {

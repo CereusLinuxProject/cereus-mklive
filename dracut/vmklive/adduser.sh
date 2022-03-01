@@ -10,7 +10,7 @@ AUTOLOGIN=$(getarg live.autologin)
 USERNAME=$(getarg live.user)
 USERSHELL=$(getarg live.shell)
 
-[ -z "$USERNAME" ] && USERNAME=anon
+[ -z "$USERNAME" ] && USERNAME=cereus
 [ -x $NEWROOT/bin/bash -a -z "$USERSHELL" ] && USERSHELL=/bin/bash
 [ -z "$USERSHELL" ] && USERSHELL=/bin/sh
 
@@ -23,12 +23,12 @@ if ! grep -q ${USERSHELL} ${NEWROOT}/etc/shells ; then
 fi
 
 # Create new user and remove password. We'll use autologin by default.
-chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel -s $USERSHELL $USERNAME
+chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel,autologin -s $USERSHELL $USERNAME
 chroot ${NEWROOT} passwd -d $USERNAME >/dev/null 2>&1
 
-# Setup default root/user password (voidlinux).
-chroot ${NEWROOT} sh -c 'echo "root:voidlinux" | chpasswd -c SHA512'
-chroot ${NEWROOT} sh -c "echo "$USERNAME:voidlinux" | chpasswd -c SHA512"
+# Setup default root/user password (cereus).
+chroot ${NEWROOT} sh -c 'echo "root:cereus" | chpasswd -c SHA512'
+chroot ${NEWROOT} sh -c "echo "$USERNAME:cereus" | chpasswd -c SHA512"
 
 # Enable sudo permission by default.
 if [ -f ${NEWROOT}/etc/sudoers ]; then
