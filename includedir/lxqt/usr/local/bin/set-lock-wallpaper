@@ -1,0 +1,16 @@
+#!/bin/bash
+
+function getbg {
+	for format in jpg png webp exif; do
+		cat ~/.config/pcmanfm-qt/lxqt/settings.conf | grep .${format} | cut -d"=" -f2
+	done
+}
+
+if [ ${auto_lock_set_wallpaper}=1 ]; then
+	lockwallpaper=$(getbg)
+	echo ${lockwallpaper}
+	betterlockscreen -u ${lockwallpaper}
+	sed -i 's|lockwallpaper=.*|lockwallpaper='"${lockwallpaper}"'|g' ~/.config/lxqt/session.conf
+else
+	echo "Automatic setting of lockscreen wallpaper is OFF"
+fi

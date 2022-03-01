@@ -5,7 +5,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 USERNAME=$(getarg live.user)
-[ -z "$USERNAME" ] && USERNAME=anon
+[ -z "$USERNAME" ] && USERNAME=cereus
 
 # Configure GDM autologin
 if [ -d ${NEWROOT}/etc/gdm ]; then
@@ -35,6 +35,8 @@ if [ -r ${NEWROOT}/etc/lightdm.conf ]; then
     sed -i -e "s|^\#\(autologin-user=\).*|\1$USERNAME|" \
         ${NEWROOT}/etc/lightdm.conf
     sed -i -e "s|^\#\(autologin-user-timeout=\).*|\10|" \
+        ${NEWROOT}/etc/lightdm.conf
+    sed -i -e "s|^\#\(greeter-setup-script=\).*|\1/usr/bin/numlockx on|" \
         ${NEWROOT}/etc/lightdm.conf
 fi
 
