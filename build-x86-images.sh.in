@@ -27,17 +27,34 @@ readonly LXQT_IMG=cereus-live-${ARCH}-${DATE}-lxqt.iso
 
 readonly GRUB="grub-i386-efi grub-x86_64-efi"
 
-readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse calamares nano rsync zstd $GRUB"
+readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse calamares nano rsync zstd cereus-repo-core cereus-repo-extra chrony $GRUB"
 readonly X_PKGS="$BASE_PKGS xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio"
 
-readonly THEMES_PKGS="Graphite-kvantum-theme-black graphite-gtk-theme-black flat-remix-icon-theme-teal Graphite-color-schemes-black"
+GLIBC_PKGS=""
+REPO_MULTILIB=""
+REPO_MULTILIB_NONFREE=""
 
-readonly CEREUS_BASEPKGS="lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings simple-scan cereus-neofetch cereus-release cereus-wallpapers htop octoxbps nano mousepad void-repo-nonfree void-repo-multilib accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools"
+case ${ARCH} in
+    x86_64)
+        GLIBC_PKGS="void-repo-multilib"
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
+        REPO_MULTILIB="https://alpha.de.repo.voidlinux.org/current/multilib"
+        REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree" 
+;;
+    *-musl)
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree" ;;
+    i686)
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree" ;;
+esac
+
+readonly THEMES_PKGS="Graphite-kvantum-theme-black graphite-gtk-theme-black flat-remix-icon-theme-green Graphite-color-schemes-black"
+
+readonly CEREUS_BASEPKGS="$GLIBC_PKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms qt5ct"
 
 readonly XFCE_PKGS="$X_PKGS xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin"
 readonly CINNAMON_PKGS="$X_PKGS lxdm cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
 readonly PLASMA_PKGS="$X_PKGS kde5 konsole firefox dolphin sddm konsole"
-readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman clementine flameshot midori qalculate-qt qpdfview xed-xapps xidlehook xcompmgr network-manager-applet"
+readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman clementine flameshot midori galculator-gtk3 qpdfview xed-xapps xidlehook xcompmgr network-manager-applet"
 
 readonly CEREUS_INCLUDEDIR="$PWD/includedir"
 
@@ -45,26 +62,26 @@ readonly CEREUS_INCLUDEDIR="$PWD/includedir"
 
 if [ -z "$IMAGE" -o "$IMAGE" = base ]; then
 	if [ ! -e $BASE_IMG ]; then
-		./mklive.sh -a $ARCH -o $BASE_IMG -I "$CEREUS_INCLUDEDIR/base" -p "$BASE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -T "Cereus Linux Base" "$@"
+		./mklive.sh -a $ARCH -o $BASE_IMG -I "$CEREUS_INCLUDEDIR/base" -p "$BASE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Base" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = xfce ]; then
 	if [ ! -e $XFCE_IMG ]; then
-		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -T "Cereus Linux XFCE" "$@"
+		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux XFCE" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = cinnamon ]; then
 	if [ ! -e $CINNAMON_IMG ]; then
-		./mklive.sh -a $ARCH -o $CINNAMON_IMG -I "$CEREUS_INCLUDEDIR/cinnamon" -p "$CINNAMON_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -T "Cereus Linux Cinnamon" "$@"
+		./mklive.sh -a $ARCH -o $CINNAMON_IMG -I "$CEREUS_INCLUDEDIR/cinnamon" -p "$CINNAMON_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA}  -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Cinnamon" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = lxqt ]; then
 	if [ ! -e $LXQT_IMG ]; then
-		./mklive.sh -a $ARCH -o $LXQT_IMG -I "$CEREUS_INCLUDEDIR/lxqt/" -p "$LXQT_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -T "Cereus Linux LXQt" "$@"
+		./mklive.sh -a $ARCH -o $LXQT_IMG -I "$CEREUS_INCLUDEDIR/lxqt/" -p "$LXQT_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux LXQt" "$@"
 	fi
 fi
 if [ -z "$IMAGE" -o "$IMAGE" = plasma ]; then
 	if [ ! -e $PLASMA_IMG ]; then
-		./mklive.sh -a $ARCH -o $PLASMA_IMG -I "$CEREUS_INCLUDEDIR/plasma" -p "$PLASMA_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -T "Cereus Linux Plasma" "$@"
+		./mklive.sh -a $ARCH -o $PLASMA_IMG -I "$CEREUS_INCLUDEDIR/plasma" -p "$PLASMA_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Plasma" "$@"
 	fi
 fi

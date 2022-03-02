@@ -1,16 +1,18 @@
 ###############################################################################
 
-Welcome to the Void Linux Live system. Two users are available to log in:
+Welcome to the Cereus Linux Live system. Two users are available to log in:
 
-	- root:voidlinux
-	- anon:voidlinux
+	- root:cereus
+	- cereus:cereus
 
-The `anon` user additionally has `sudo(8)` permissions to run any command
+The `cereus` user additionally has `sudo(8)` permissions to run any command
 without a password.
 
-To start the installation please type:
+To start the TUI installation please type:
 
     # void-installer
+
+To start the GUI installation, open the `Install System` launcher after logging in.
 
 and follow the on-screen instructions. To install additional software make
 sure to configure your network interface and then use:
@@ -21,8 +23,8 @@ sure to configure your network interface and then use:
 The Void Linux Handbook is also available for offline access in multiple
 formats, and can be accessed with the `void-docs(1)` utility.
 
-Thanks for using Void Linux.
+Thanks for using Cereus Linux.
 
-    https://www.voidlinux.org
+    https://sourceforge.net/projects/cereus-linux/
 
 ###############################################################################

@@ -121,14 +121,14 @@ navigation: widget
 # are visible as buttons there if the corresponding *show* keys
 # are set to "true" (they can also be overridden).
 strings:
-    productName:         SeleneOS Linux
-    shortProductName:    SeleneOS
-    version:             rolling
-    shortVersion:        rolling
-    versionedName:       SeleneOS Linux
-    shortVersionedName:  SeleneOS
-    bootloaderEntryName: SeleneOS
-    productUrl:          https://www.SeleneOSlinux.org/
+    productName:         Cereus Linux
+    shortProductName:    Cereus
+    version:             LXQt
+    shortVersion:        LXQt
+    versionedName:       Cereus Linux LXQt
+    shortVersionedName:  Cereus LXQt
+    bootloaderEntryName: Ceres Linux LXQt
+    productUrl:          https://sourceforge.net/projects/cereus-linux/
     supportUrl:          https://github.com/calamares/calamares/issues
     knownIssuesUrl:      https://calamares.io/about/
     releaseNotesUrl:     https://calamares.io/about/
@@ -161,8 +161,8 @@ strings:
 #
 # These filenames can also use substitutions from os-release (see above).
 images:
-    productLogo:         "logo.svg"
-    productIcon:         "logo.svg"
+    productLogo:         "logo.png"
+    productIcon:         "logo.png"
     productWelcome:      "languages.png"
 
 ### SLIDESHOW
@@ -188,7 +188,7 @@ images:
 
 # Using slides directly instead,and because the sliding time ends at 1s, adding the same slide 2 more times, increases the sliding time to 3s (approx)
 
-#slideshow: [ "SeleneOS.png", "SeleneOS.png", "SeleneOS.png", "browsers.png", "browsers.png", "browsers.png", "customise.png",  "customise.png",  "customise.png", "desktops.png", "desktops.png",  "desktops.png", "helpers.png", "helpers.png", "helpers.png", "inits.png", "inits.png", "inits.png",  "libreoffice.png", "libreoffice.png", "libreoffice.png", "multimedia.png", "multimedia.png", "multimedia.png", "productivity.png", "productivity.png", "productivity.png", "rolling.png", "rolling.png", "rolling.png"  ]
+#slideshow [ "SeleneOS.png","SeleneOS.png","SeleneOS.png","desktops.png","desktops.png","desktops.png","games.png","games.png","games.png","packages1.png","packages1.png","packages1.png","inits.png", "inits.png", "inits.png","inits.png","inits.png", ]
 
 slideshow:  "show.qml"
 

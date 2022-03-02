@@ -23,6 +23,7 @@ if ! grep -q ${USERSHELL} ${NEWROOT}/etc/shells ; then
 fi
 
 # Create new user and remove password. We'll use autologin by default.
+chroot ${NEWROOT} groupadd autologin
 chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel,autologin -s $USERSHELL $USERNAME
 chroot ${NEWROOT} passwd -d $USERNAME >/dev/null 2>&1
 

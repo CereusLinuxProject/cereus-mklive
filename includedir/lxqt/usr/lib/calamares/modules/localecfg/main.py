@@ -151,7 +151,7 @@ def run():
     # in that case, fix your installation filesystem.
     if os.path.exists('/etc/default/libc-locales'):
         rewrite_locale_gen(target_locale_gen, target_locale_gen, locale_conf)
-        libcalamares.utils.target_env_call(['xbps-reconfigure -f glibc-locales'])
+        libcalamares.utils.target_env_call(['xbps-reconfigure', '-f', 'glibc-locales'])
         libcalamares.utils.debug('{!s} done'.format(target_locale_gen))
 
     # write /etc/locale.conf
