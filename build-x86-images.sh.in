@@ -15,6 +15,7 @@ shift $((OPTIND - 1))
 
 : ${ARCH:=$(uname -m)}
 
+readonly CEREUS_INCLUDEDIR="$PWD/includedir"
 readonly REPO_CORE=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH}
 readonly REPO_EXTRA=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}
 
@@ -39,24 +40,25 @@ case ${ARCH} in
         GLIBC_PKGS="void-repo-multilib"
         REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
         REPO_MULTILIB="https://alpha.de.repo.voidlinux.org/current/multilib"
-        REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree" 
+        REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree"
+        sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf 
 ;;
     *-musl)
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree" ;;
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree"
+        sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
     i686)
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree" ;;
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
+        sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf  ;;
 esac
 
 readonly THEMES_PKGS="Graphite-kvantum-theme-black graphite-gtk-theme-black flat-remix-icon-theme-green Graphite-color-schemes-black"
 
-readonly CEREUS_BASEPKGS="$GLIBC_PKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms qt5ct"
+readonly CEREUS_BASEPKGS="$GLIBC_PKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms musl-locales"
 
 readonly XFCE_PKGS="$X_PKGS xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin"
 readonly CINNAMON_PKGS="$X_PKGS lxdm cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
 readonly PLASMA_PKGS="$X_PKGS kde5 konsole firefox dolphin sddm konsole"
 readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman clementine flameshot midori galculator-gtk3 qpdfview xed-xapps xidlehook xcompmgr network-manager-applet"
-
-readonly CEREUS_INCLUDEDIR="$PWD/includedir"
 
 [ ! -x mklive.sh ] && exit 0
 

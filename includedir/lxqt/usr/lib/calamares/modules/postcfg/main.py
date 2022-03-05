@@ -76,7 +76,7 @@ class ConfigController:
         self.remove_pkg("calamares-git", "usr/bin/calamares")
         target_env_call(["rm", "-f", "usr/share/applications/calamares.desktop"])
         target_env_call(["rm", "-f", "etc/skel/Desktop/calamares.desktop"])
-        target_env_call(["rm", "-f", "home/*/Desktop/calamares.desktop"])
+        target_env_call(["rm", "-f", "home/*/*/calamares.desktop"])
 
         # Copy skel to root
         self.copy_folder('etc/skel', 'root')
