@@ -7,7 +7,7 @@ while getopts "a:b:hr:" opt; do
 case $opt in
 	a) ARCH="$OPTARG";;
 	b) IMAGE="$OPTARG";;
-	h) echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt ] [-r repo]" >&2; exit 1;;
+	h) echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt | fluxbox | i3wm | lxde ] [-r repo]" >&2; exit 1;;
 	r) REPO="-r $OPTARG $REPO";;
 esac
 done
@@ -26,39 +26,67 @@ readonly CINNAMON_IMG=cereus-live-${ARCH}-${DATE}-cinnamon.iso
 readonly PLASMA_IMG=cereus-live-${ARCH}-${DATE}-plasma.iso
 readonly LXQT_IMG=cereus-live-${ARCH}-${DATE}-lxqt.iso
 
+# UNOFFICIAL
+readonly FLUXBOX_IMG=cereus-live-${ARCH}-${DATE}-fluxbox.iso
+readonly I3WM_IMG=cereus-live-${ARCH}-${DATE}-i3wm.iso
+readonly LXDE_IMG=cereus-live-${ARCH}-${DATE}-lxde.iso
+
+# END OF UNOFFICIAL
+
 readonly GRUB="grub-i386-efi grub-x86_64-efi"
 
-readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse calamares nano rsync zstd cereus-repo-core cereus-repo-extra chrony $GRUB"
+readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony $GRUB"
 readonly X_PKGS="$BASE_PKGS xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio"
 
 GLIBC_PKGS=""
+MUSL_PKGS=""
+X64_PKGS=""
+X32_PKGS=""
 REPO_MULTILIB=""
 REPO_MULTILIB_NONFREE=""
+LIBC_PKGS="${MUSL_PKGS} ${GLIBC_PKGS}"
+ARCH_PKGS="${X64_PKGS} ${X32_PKGS}"
 
 case ${ARCH} in
     x86_64)
+        X64_PKGS="firefox"
         GLIBC_PKGS="void-repo-multilib"
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfrdsee"
         REPO_MULTILIB="https://alpha.de.repo.voidlinux.org/current/multilib"
         REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf 
 ;;
     *-musl)
+        X64_PKGS="firefox"
+		MUSL_PKGS="musl-locales"
         REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree"
         sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
     i686)
+        X32_PKGS="midori"
         REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf  ;;
 esac
 
 readonly THEMES_PKGS="Graphite-kvantum-theme-black graphite-gtk-theme-black flat-remix-icon-theme-green Graphite-color-schemes-black"
 
-readonly CEREUS_BASEPKGS="$GLIBC_PKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms musl-locales"
+readonly CEREUS_BASEPKGS="$BASE_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS calamares elogind simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc"
 
-readonly XFCE_PKGS="$X_PKGS xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin"
-readonly CINNAMON_PKGS="$X_PKGS lxdm cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-readonly PLASMA_PKGS="$X_PKGS kde5 konsole firefox dolphin sddm konsole"
-readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman clementine flameshot midori galculator-gtk3 qpdfview xed-xapps xidlehook xcompmgr network-manager-applet"
+readonly XFCE_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin"
+
+readonly CINNAMON_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit"
+
+readonly PLASMA_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark clementine kate5 kcalc udisks2 okular spectacle"
+
+readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman clementine flameshot midori galculator-gtk3 qpdfview xed-xapps xidlehook xcompmgr network-manager-applet"
+
+# UNOFFICIAL
+
+FLUXBOX_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-applet ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman xidlehook betterlockscreen clipit lxqt-policykit-agent ksuperkey flameshot brillo skippy-xd pavucontrol nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,compare,audio-tab} galculator-gtk3"
+
+readonly I3WM_PKGS=""
+readonly LXDE_PKGS=""
+
+# END OF UNOFFICIAL
 
 [ ! -x mklive.sh ] && exit 0
 
@@ -85,5 +113,33 @@ fi
 if [ -z "$IMAGE" -o "$IMAGE" = plasma ]; then
 	if [ ! -e $PLASMA_IMG ]; then
 		./mklive.sh -a $ARCH -o $PLASMA_IMG -I "$CEREUS_INCLUDEDIR/plasma" -p "$PLASMA_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Plasma" "$@"
+	fi
+fi
+
+# UNOFFICIAL
+
+if [ -z "$IMAGE" -o "$IMAGE" = fluxbox ]; then
+	if [ ! -e $FLUXBOX_IMG ]; then
+
+        case ${ARCH} in
+            *-musl)
+                MUSL_PKGS+="picom-ibhagwan" ;;
+            *)
+                GLIBC_PKGS+="picom-jonaburg" ;;
+        esac
+
+		./mklive.sh -a $ARCH -o $FLUXBOX_IMG -I "$CEREUS_INCLUDEDIR/fluxbox" -p "$FLUXBOX_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Fluxbox" "$@"
+	fi
+fi
+
+if [ -z "$IMAGE" -o "$IMAGE" = i3wm ]; then
+	if [ ! -e $I3WM_IMG ]; then
+		./mklive.sh -a $ARCH -o $I3WM_IMG -I "$CEREUS_INCLUDEDIR/i3wm" -p "$I3WM_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux i3wm" "$@"
+	fi
+fi
+
+if [ -z "$IMAGE" -o "$IMAGE" = lxde ]; then
+	if [ ! -e $LXDE_IMG ]; then
+		./mklive.sh -a $ARCH -o $LXDE_IMG -I "$CEREUS_INCLUDEDIR/lxde" -p "$LXDE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux LXDE" "$@"
 	fi
 fi
