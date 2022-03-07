@@ -51,7 +51,7 @@ case ${ARCH} in
     x86_64)
         X64_PKGS="firefox"
         GLIBC_PKGS="void-repo-multilib"
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfrdsee"
+        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
         REPO_MULTILIB="https://alpha.de.repo.voidlinux.org/current/multilib"
         REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf 
