@@ -1,5 +1,6 @@
 [Desktop Entry]
 Exec=ksuperkey
-Name=Enable Super key shortcut
+Name=KSuperKey
 Type=Application
 Version=1.0
+Name[en_US]=ksuperkey.desktop
