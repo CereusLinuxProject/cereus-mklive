@@ -127,8 +127,8 @@ strings:
     shortVersion:        LXQt
     versionedName:       Cereus Linux LXQt
     shortVersionedName:  Cereus LXQt
-    bootloaderEntryName: Ceres Linux LXQt
-    productUrl:          https://sourceforge.net/projects/cereus-linux/
+    bootloaderEntryName: Cereus Linux LXQt
+    productUrl:          https://cereus-linux.sourceforge.io/
     supportUrl:          https://github.com/calamares/calamares/issues
     knownIssuesUrl:      https://calamares.io/about/
     releaseNotesUrl:     https://calamares.io/about/
