@@ -81,7 +81,7 @@ readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS 
 
 # UNOFFICIAL
 
-FLUXBOX_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman xidlehook betterlockscreen clipit lxqt-policykit-agent ksuperkey flameshot brillo skippy-xd pavucontrol nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,compare,audio-tab} galculator-gtk3 fbmenugen Sierra-Dark-Fluxbox"
+FLUXBOX_PKGS="$X_PKGS $THEMES_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman xidlehook betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,compare,audio-tab} galculator-gtk3 fbmenugen Sierra-Dark-Fluxbox"
 
 readonly I3WM_PKGS=""
 readonly LXDE_PKGS=""
