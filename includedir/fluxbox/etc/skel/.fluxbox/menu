@@ -1,0 +1,120 @@
+#
+## Menu generated with fbmenugen v0.85
+#
+
+[begin] (Fluxbox)
+[encoding] {UTF-8}
+  [exec] (File Manager) {xdg-open .}
+  [exec] (Terminal) {urxvt}
+  [exec] (Web Browser) {xdg-open http://}
+  [exec] (Run command) {fbrun}
+[separator]
+[submenu] (Accessories)
+  [exec] (ClipIt) {clipit}
+  [exec] (Files - Nemo) {nemo}
+  [exec] (KeePassXC) {keepassxc}
+  [exec] (Kvantum Manager) {kvantummanager}
+  [exec] (LightDM GTK+ Greeter settings) {lightdm-gtk-greeter-settings-pkexec}
+  [exec] (MATE Calculator) {mate-calc}
+  [exec] (MATE Font Viewer) {mate-font-viewer}
+  [exec] (Text Editor) {xed}
+[end]
+[submenu] (Graphics)
+  [exec] (Flameshot) {/usr/bin/flameshot}
+  [exec] (GNU Image Manipulation Program) {gimp-2.10}
+  [exec] (Gpick) {gpick}
+  [exec] (Image Viewer) {eog}
+  [exec] (MATE Color Selection) {mate-color-select}
+  [exec] (Photos) {io.elementary.photos}
+[end]
+[submenu] (Multimedia)
+  [exec] (Clementine) {clementine}
+  [exec] (projectM Jack Audio Visualization) {projectM-jack}
+  [exec] (projectM PulseAudio Visualization) {projectM-pulseaudio}
+  [exec] (PulseAudio Volume Control) {pavucontrol}
+[end]
+[submenu] (Network)
+  [exec] (Chromium) {/opt/ungoogled-chromium/chrome-wrapper}
+  [exec] (Falkon) {falkon}
+  [exec] (Firefox Web Browser) {firefox}
+  [exec] (Telegram Desktop) {telegram-desktop --}
+  [exec] (Ungoogled Chromium) {ungoogled-chromium}
+  [exec] (wpaCute) {wpa-cute}
+[end]
+[submenu] (Other)
+  [exec] (Help) {yelp help:mate-user-guide}
+  [exec] (sm64ex) {}
+[end]
+[submenu] (Settings)
+  [exec] (About Me) {mate-about-me}
+  [exec] (Appearance) {mate-appearance-properties}
+  [exec] (Assistive Technologies) {mate-at-properties}
+  [exec] (Bluetooth Adapters) {blueman-adapters}
+  [exec] (Bluetooth Manager) {blueman-manager}
+  [exec] (Control Center) {mate-control-center}
+  [exec] (Customize Look and Feel) {lxappearance}
+  [exec] (Displays) {mate-display-properties}
+  [exec] (Keyboard Shortcuts) {mate-keybinding-properties}
+  [exec] (Keyboard) {mate-keyboard-properties}
+  [exec] (Kvantum Manager) {kvantummanager}
+  [exec] (LightDM GTK+ Greeter settings) {lightdm-gtk-greeter-settings-pkexec}
+  [exec] (Mouse) {mate-mouse-properties}
+  [exec] (Network Proxy) {mate-network-properties}
+  [exec] (Popup Notifications) {mate-notification-properties}
+  [exec] (Preferred Applications) {mate-default-applications-properties}
+  [exec] (PulseAudio Volume Control) {pavucontrol}
+  [exec] (Qt5 Settings) {qt5ct}
+  [exec] (Startup Applications) {mate-session-properties}
+  [exec] (Time And Date Manager) {mate-time-admin}
+  [exec] (Windows) {mate-window-properties}
+[end]
+[submenu] (System)
+  [exec] (Htop) {xterm -e 'htop'}
+  [exec] (LightDM GTK+ Greeter settings) {lightdm-gtk-greeter-settings-pkexec}
+  [exec] (ranger) {xterm -e 'ranger'}
+  [exec] (rxvt-unicode) {urxvt}
+  [exec] (Timeshift) {timeshift-launcher}
+  [exec] (Tint2) {tint2}
+[end]
+[separator]
+[submenu] (Advanced Settings)
+  [exec] (Conky RC) {geany ~/.conkyrc}
+  [exec] (Tint2 Panel) {geany ~/.config/tint2/tint2rc}
+[submenu] (Fbmenugen)
+  [exec] (Menu Schema) {geany ~/.config/fbmenugen/schema.pl}
+  [exec] (Menu Config) {geany ~/.config/fbmenugen/config.pl}
+[separator]
+  [exec] (Generate a menu with icons) {fbmenugen -i}
+  [exec] (Generate a menu without icons) {fbmenugen -g}
+[separator]
+  [exec] (Refresh cache) {fbmenugen -d}
+[end]
+[submenu] (Fluxbox)
+[config] (Configure)
+[submenu] (System Styles) {Choose a style...}
+  [stylesdir] (/usr/share/fluxbox/styles)
+[end]
+[submenu] (User Styles) {Choose a style...}
+  [stylesdir] (~/.fluxbox/styles)
+[end]
+[workspaces] (Workspace List)
+[submenu] (Tools)
+  [exec] (Screenshot - JPG) {import screenshot.jpg && display -resize 50% screenshot.jpg}
+  [exec] (Screenshot - PNG) {import screenshot.png && display -resize 50% screenshot.png}
+  [exec] (Run) {fbrun}
+  [exec] (Regen Menu) {fluxbox-generate_menu}
+[end]
+[commanddialog] (Fluxbox Command)
+  [reconfig] (Reload config)
+  [restart] (Restart)
+  [exec] (About) {(fluxbox -v; fluxbox -info | sed 1d) | xmessage -file - -center}
+  [separator]
+  [exit] (Exit)
+[end]
+[end]
+[separator]
+  [exec] (Refresh) {/usr/bin/perl \/usr\/bin\/fbmenugen -S \/home\/kevin\/\.config\/fbmenugen\/schema\.pl -C \/home\/kevin\/\.config\/fbmenugen\/config\.pl -o \/home\/kevin\/\.fluxbox\/menu}
+[exit] (Exit)
+
+[endencoding]
+[end]

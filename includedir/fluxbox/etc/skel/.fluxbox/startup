@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# fluxbox startup-script:
+#
+# Lines starting with a '#' are ignored.
+
+# Change your keymap:
+# xmodmap "/home/kevin/.Xmodmap"
+
+# Applications you want to run with fluxbox.
+# MAKE SURE THAT APPS THAT KEEP RUNNING HAVE AN ''&'' AT THE END.
+#
+# unclutter -idle 2 &
+# wmnd &
+# wmsmixer -w &
+# idesk &
+
+###
+### PERSONAL AUTOSTART ###
+###
+
+#Apps which need the WM to be loaded first
+~/scripts/wait-wm-apps
+
+#Start pulseaudio
+pulseaudio --start &
+
+#Notification daemon
+/usr/lib/xfce4/notifyd/xfce4-notifyd &
+
+#Pulseaudio applet
+# pa-applet &
+pasystray --notify=all
+
+#NetworkManager applet 
+nm-applet &
+
+#Bluetooth manager
+blueman-applet &
+
+#Enable numlock
+ numlockx &
+
+#Change keymap
+# setxkbmap latam
+
+#List non mounted drives
+# udiskie &
+ devmon &
+
+#Desktop icons
+nemo-desktop &
+
+#Autolock inhibitor
+xidlehook --not-when-audio --not-when-fullscreen --timer ${LOCK_TIME} "betterlockscreen -l" "" --timer ${SUSPEND_TIME} "loginctl suspend" "" &
+
+#Clipboard manager
+ clipit &
+
+#Update notifier
+octoxbps-notifier &
+
+#LXQt Polkit Agent
+lxqt-policykit-agent &
+
+#Blur Compositor
+picom -b &
+
+#Update lockscreen wallpaper, based on current desktop wallpaper
+betterlockscreen -u $(cat ~/.config/nitrogen/bg-saved.cfg | grep file= | cut -d"=" -f2)
+
+#PipeWire
+# pipewire &
+# pipewire-pulse &
+
+# Enable Super key for menu
+ksuperkey &
+
+#Reload URxvt configs
+xrdb -merge ~/.Xresources
+
+# rxvt-unicode daemon 
+urxvtd -q -f -o &
+
+###
+### END OF PERSONAL AUTOSTART ###
+###
+
+
+# And last but not least we start fluxbox.
+# Because it is the last app you have to run it with ''exec'' before it.
+
+exec fluxbox
+
+# or if you want to keep a log:
+#  fluxbox -log "/home/kevin/.fluxbox/log"

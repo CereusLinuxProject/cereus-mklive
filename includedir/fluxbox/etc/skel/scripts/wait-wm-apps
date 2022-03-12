@@ -1,0 +1,19 @@
+#!/bin/bash
+function checkwm {
+    wmctrl -m
+    exitstatus=$?
+}
+
+checkwm
+
+ if [ "$exitstatus" = 0 ]; then
+    echo "Opening apps"
+    while [ "$exitstatus" = 1 ]; do checkwm; sleep 1; done
+    $BAR_APPLICATION &
+    nitrogen --restore &
+ else
+    echo "Window manager not running"
+    while [ "$exitstatus" = 1 ]; do checkwm; sleep 1; done
+    $BAR_APPLICATION &
+    nitrogen --restore &
+ fi

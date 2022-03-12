@@ -1,0 +1,34 @@
+[app] (name=fbrun)
+  [Position]	(CENTER)	{0 0}
+  [Layer]	{2}
+[end]
+[app] (name=Navigator) (class=Firefox) (role=browser)
+  [Deco]	{NONE}
+[end]
+[app] (name=ungoogled-chromium) (class=Ungoogled-chromium) (role=browser)
+  [Deco]	{0x5e0}
+[end]
+[app] (name=Navigator) (class=LibreWolf) (role=browser)
+  [Deco]	{NONE}
+[end]
+[app] (name=budgie-panel) (class=Budgie-panel) (role=panel)
+  [Sticky]	{yes}
+[end]
+[app] (name=panel) (class=tint2)
+  [Layer]	{4}
+[end]
+[app] (name=nemo-desktop) (class=Nemo-desktop)
+  [Head]	{1}
+  [Maximized]	{no}
+  [Layer]	{12}
+  [Close]	{yes}
+[end]
+[app] (class=pcmanfm-qt) (name=pcmanfm-qt)
+  [Head]	{1}
+  [Maximized]	{no}
+  [Layer]	{12}
+[end]
+[app] (name=budgie-panel) (class=Budgie-panel)
+  [Sticky]	{yes}
+  [Layer]	{4}
+[end]
