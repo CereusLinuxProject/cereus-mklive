@@ -20,7 +20,7 @@
 ###
 
 #Apps which need the WM to be loaded first
-~/scripts/wait-wm-apps
+~/scripts/wait-wm-apps &
 
 #Start pulseaudio
 pulseaudio --start &
@@ -29,8 +29,7 @@ pulseaudio --start &
 /usr/lib/xfce4/notifyd/xfce4-notifyd &
 
 #Pulseaudio applet
-# pa-applet &
-pasystray --notify=all
+pasystray --notify=all &
 
 #NetworkManager applet 
 nm-applet &
@@ -45,7 +44,6 @@ blueman-applet &
 # setxkbmap latam
 
 #List non mounted drives
-# udiskie &
  devmon &
 
 #Desktop icons
@@ -67,7 +65,7 @@ lxqt-policykit-agent &
 picom -b &
 
 #Update lockscreen wallpaper, based on current desktop wallpaper
-betterlockscreen -u $(cat ~/.config/nitrogen/bg-saved.cfg | grep file= | cut -d"=" -f2)
+betterlockscreen -u $(cat ~/.config/nitrogen/bg-saved.cfg | grep file= | cut -d"=" -f2) &
 
 #PipeWire
 # pipewire &
@@ -77,7 +75,7 @@ betterlockscreen -u $(cat ~/.config/nitrogen/bg-saved.cfg | grep file= | cut -d"
 ksuperkey &
 
 #Reload URxvt configs
-xrdb -merge ~/.Xresources
+xrdb -merge ~/.Xresources &
 
 # rxvt-unicode daemon 
 urxvtd -q -f -o &
