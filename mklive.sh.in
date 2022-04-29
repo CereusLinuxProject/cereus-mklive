@@ -309,8 +309,8 @@ ARCH=$(xbps-uhelper arch)
 
 XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=http://alpha.de.repo.voidlinux.org/current \
  --repository=http://alpha.de.repo.voidlinux.org/current/musl \
- --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH} \
- --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}"
+ --repository=https://mirrors.gigenet.com/OSDN//storage/g/c/ce/cereuslinux/repos/cereus-core/${ARCH} \
+ --repository=https://mirrors.gigenet.com/OSDN//storage/g/c/ce/cereuslinux/repos/cereus-extra/${ARCH}"
 
 # Configure dracut to use overlayfs for the writable overlay.
 BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
