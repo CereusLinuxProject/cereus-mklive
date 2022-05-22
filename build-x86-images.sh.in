@@ -58,7 +58,7 @@ case ${ARCH} in
 ;;
     *-musl)
         X64_PKGS="firefox"
-		MUSL_PKGS="musl-locales"
+		# MUSL_PKGS="musl-locales"
         REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree"
         sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
     i686)
@@ -69,7 +69,7 @@ esac
 
 readonly THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black flat-remix-icon-theme-green Graphite-color-schemes-black"
 
-readonly CEREUS_BASEPKGS="$BASE_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS calamares-cereus elogind simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg xz unrar unzip zip earlyoom"
+readonly CEREUS_BASEPKGS="$BASE_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS calamares-cereus elogind simple-scan cereus-neofetch cereus-wallpapers htop octoxbps nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps pulseaudio python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip earlyoom"
 
 readonly XFCE_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin evince"
 
