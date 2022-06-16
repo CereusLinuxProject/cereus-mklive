@@ -1,9 +1,7 @@
 #!/bin/bash
 
 function getbg {
-	for format in jpg png webp exif; do
-		cat ~/.config/pcmanfm-qt/lxqt/settings.conf | grep .${format} | cut -d"=" -f2
-	done
+		cat ~/.config/pcmanfm-qt/lxqt/settings.conf | grep Wallpaper=/ | cut -d"=" -f2
 }
 
 if [ ${auto_lock_set_wallpaper}=1 ]; then

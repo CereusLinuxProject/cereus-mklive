@@ -12,7 +12,7 @@ GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4"
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
 #GRUB_TERMINAL_OUTPUT=console
-GRUB_BACKGROUND=/usr/share/backgrounds/background5.png
+GRUB_BACKGROUND=/usr/share/backgrounds/grub-img.png
 GRUB_GFXMODE=1920x1080,auto
 #GRUB_DISABLE_LINUX_UUID=true
 #GRUB_DISABLE_RECOVERY=true

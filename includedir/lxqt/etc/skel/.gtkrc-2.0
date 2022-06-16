@@ -1,7 +1,7 @@
 
 # Created by lxqt-config-appearance (DO NOT EDIT!)
-gtk-theme-name = "Graphite-black-teal-dark"
-gtk-icon-theme-name = "Flat-Remix-Green-Dark"
+gtk-theme-name = "Graphite-black-green-dark"
+gtk-icon-theme-name = "Tela-green-dark"
 gtk-font-name = "Roboto 10"
 gtk-button-images = 1
 gtk-menu-images = 1
