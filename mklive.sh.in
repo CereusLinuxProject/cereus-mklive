@@ -307,8 +307,8 @@ shift $((OPTIND - 1))
 
 ARCH=$(xbps-uhelper arch)
 
-XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.orgcurrent \
- --repository=https://repo-default.voidlinux.orgcurrent/musl \
+XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.org/current \
+ --repository=https://repo-default.voidlinux.org/current/musl \
  --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH} \
  --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}"
 
