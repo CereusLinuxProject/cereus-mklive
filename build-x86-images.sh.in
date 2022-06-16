@@ -51,19 +51,19 @@ case ${ARCH} in
     x86_64)
         X64_PKGS="firefox"
         GLIBC_PKGS="void-repo-multilib"
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
-        REPO_MULTILIB="https://alpha.de.repo.voidlinux.org/current/multilib"
-        REPO_MULTILIB_NONFREE="https://alpha.de.repo.voidlinux.org/current/multilib/nonfree"
+        REPO_NONFREE="https://repo-default.voidlinux.org/current/nonfree"
+        REPO_MULTILIB="https://repo-default.voidlinux.org/current/multilib"
+        REPO_MULTILIB_NONFREE="https://repo-default.voidlinux.org/current/multilib/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf 
 ;;
     *-musl)
         X64_PKGS="firefox"
 		# MUSL_PKGS="musl-locales"
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/musl/nonfree"
+        REPO_NONFREE="https://repo-default.voidlinux.org/current/musl/nonfree"
         sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
     i686)
         X32_PKGS="midori"
-        REPO_NONFREE="https://alpha.de.repo.voidlinux.org/current/nonfree"
+        REPO_NONFREE="https://repo-default.voidlinux.org/current/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf  ;;
 esac
 
