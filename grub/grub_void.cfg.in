@@ -21,22 +21,10 @@ if loadfont "(${voidlive})/boot/grub/fonts/unicode.pf2" ; then
     terminal_output gfxterm
 
     insmod gfxmen
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_12.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_14.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_16.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_24.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_32.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/dejavu_sans_48.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/terminus-12.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/terminus-14.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/terminus-16.pf2
-    loadfont (${voidlive}/usr/share/grub/themes/Graphite/terminus-18.pf2
-
     insmod jpeg
     insmod png
 
-    set theme=(${voidlive})/usr/share/grub/themes/Graphite/theme.txt
-    export theme
+    background_image "(${voidlive})/usr/share/backgrounds/grub-img.png"
 fi
 
 if [ cpuid -l ]; then
