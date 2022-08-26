@@ -1,6 +1,0 @@
-[Desktop Entry]
-Exec=/usr/local/bin/set-lock-wallpaper
-Name=Lock Wallpaper
-Type=Application
-Version=1.0
-Name[en_US]=set-lock-wallpaper.desktop

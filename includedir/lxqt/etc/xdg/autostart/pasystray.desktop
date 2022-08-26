@@ -3,7 +3,7 @@ Version=1.0
 Name=PulseAudio System Tray
 GenericName=
 Comment=An Applet for PulseAudio
-Exec=pasystray --notify=all
+Exec=pasystray-pipewire
 Icon=pasystray
 StartupNotify=true
 Type=Application
