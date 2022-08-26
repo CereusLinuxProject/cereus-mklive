@@ -173,7 +173,7 @@
     <!-- in milliseconds (1000 = 1 second) -->
     <showDelay>300</showDelay>
     <!-- in milliseconds (1000 = 1 second) -->
-    <moveButton>Middle</moveButton>
+    <moveButton>Middle</moveButton>file:///home/kevin/cereus/mklive/data/splash.png
     <!-- 'Left', 'Middle', 'Right' -->
   </dock>
   <keyboard>
@@ -320,9 +320,9 @@
       <action name="Execute">
         <startupnotify>
           <enabled>true</enabled>
-          <name>Konqueror</name>
+          <name>File-Manager</name>
         </startupnotify>
-        <command>kfmclient openProfile filemanagement</command>
+        <command>xdg-open .</command>
       </action>
     </keybind>
 
