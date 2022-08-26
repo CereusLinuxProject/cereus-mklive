@@ -6,7 +6,7 @@ Name=Install System
 GenericName=System Installer
 Keywords=calamares;system;installer;
 TryExec=calamares
-Exec=sh -c "pkexec env QT_QPA_PLATFORMTHEME=${QT_QPA_PLATFORMTHEME} calamares"
+Exec=sh -c "pkill xcompmgr; pkexec env QT_QPA_PLATFORMTHEME=${QT_QPA_PLATFORMTHEME} XAUTHORITY=${XAUTHORITY} DISPLAY=${DISPLAY} calamares"
 Comment=Calamares — System Installer
 Icon=calamares
 Terminal=false
