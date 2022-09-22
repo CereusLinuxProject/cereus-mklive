@@ -1,6 +1,5 @@
 [Desktop Entry]
-Exec=xcompmgr -cfC
+Exec=picom -b
 Name=Compositor
 Type=Application
 Version=1.0
-Name[en_US]=xcompmgr.desktop

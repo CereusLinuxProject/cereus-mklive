@@ -77,7 +77,7 @@ readonly CINNAMON_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEP
 
 readonly PLASMA_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
 
-readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ betterlockscreen blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps xcompmgr network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker"
+readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps picom network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker"
 
 # UNOFFICIAL
 
