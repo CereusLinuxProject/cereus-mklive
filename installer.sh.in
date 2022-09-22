@@ -1176,7 +1176,7 @@ install_packages() {
         _grub="grub"
     fi
 
-    _syspkg="base-system"
+    _syspkg="base-cereus"
 
     mkdir -p $TARGETDIR/var/db/xbps/keys $TARGETDIR/usr/share
     cp -a /usr/share/xbps.d $TARGETDIR/usr/share/
@@ -1258,12 +1258,21 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         xbps-remove -r $TARGETDIR -Ry dialog >>$LOG 2>&1
         
         # Remove Calamares
-        chroot $TARGETDIR xbps-remove -Ry calamares-cereus >>$LOG 2>&1
-        rm -f $TARGETDIR/usr/share/applications/calamares.desktop
-
-        # Enable plymouth
-        chroot $TARGETDIR plymouth-set-default-theme -R cereus_simply >>$LOG 2>&1
+        if [ -f $TARGETDIR/usr/bin/calamares ]; then
+            chroot $TARGETDIR xbps-remove -Ry calamares-cereus >>$LOG 2>&1
+            rm -f $TARGETDIR/usr/share/applications/calamares.desktop
+        fi
         
+        # Enable plymouth
+        if [ -f $TARGETDIR/etc/plymouth/plymouthd.conf ]; then
+            chroot $TARGETDIR plymouth-set-default-theme -R cereus_simply >>$LOG 2>&1
+        fi 
+
+        # Disable LightDM autologin
+        if [ -f $TARGETDIR/etc/lightdm/lightdm.conf ]; then
+            sed -i 's|autologin-user=cereus|#autologin-user=|g' ${TARGETDIR}/etc/lightdm/lightdm.conf
+        fi 
+
         rmdir $TARGETDIR/mnt/target
     else
         # mount required fs
@@ -1332,6 +1341,20 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         fi
         unset USERLOGIN
     fi
+
+    if [ -f $TARGETDIR/etc/doas.conf ]; then
+        USERLOGIN="$(get_option USERLOGIN)"
+        if [ -z "$(echo $(get_option USERGROUPS) | grep -w wheel)" -a -n "$USERLOGIN" ]; then
+            # enable doas for primary user USERLOGIN who is not member of wheel
+            echo "# Enable doas for login '$USERLOGIN'" >> $TARGETDIR/etc/doas.conf
+            echo "permit persist :$USERLOGIN" >> $TARGETDIR/etc/doas.conf
+        else
+            # enable the sudoers entry for members of group wheel
+            echo "permit persist :wheel" >> $TARGETDIR/etc/doas.conf
+        fi
+        unset USERLOGIN
+    fi
+
 
     # clean up polkit rule - it's only useful in live systems
     rm -f $TARGETDIR/etc/polkit-1/rules.d/void-live.rules
@@ -1465,11 +1488,10 @@ fi
 #
 # main()
 #
-DIALOG --title "${BOLD}${RED} Enter the void ... ${RESET}" --msgbox "\n
+DIALOG --title "${BOLD}${RED} Do it functional ... ${RESET}" --msgbox "\n
 Welcome to the Cereus Linux installation. A simple and minimal \
-Linux distribution based on Void Linux which includes XBPS a new \
-alternative binary package system; with the purpose to provide an \
-user friendly experience to adapt on Void's ecosystem. \n\n
+Linux distribution based on Void Linux with the purpose to provide \
+an user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
 please create any issue at ${BOLD}https://github.com/cereuslinux/cereus-mklive${RESET}.\n\n
 Also, we recommend to read the official Void documentation: ${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
