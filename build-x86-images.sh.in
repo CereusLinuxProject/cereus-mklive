@@ -78,11 +78,14 @@ esac
         # UNOFFICIAL EDITIONS
         fluxbox)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook"
+            ;;
         # Still incomplete
         i3wm)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter lightdm-gtk-greeter-settings i3-gaps"
+            ;;
         lxde)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter lightdm-gtk-greeter-settings gvfs-afc gvfs-mtp gvfs-smb udisks2"
+            ;;
         *)
             >&2 echo "Unknown variant $variant"
             exit 1
