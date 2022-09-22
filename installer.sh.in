@@ -1256,6 +1256,14 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         INFOBOX "Removing temporary packages from target ..." 4 60
         echo "Removing temporary packages from target ..." >$LOG
         xbps-remove -r $TARGETDIR -Ry dialog >>$LOG 2>&1
+        
+        # Remove Calamares
+        chroot $TARGETDIR xbps-remove -Ry calamares-cereus >>$LOG 2>&1
+        rm -f $TARGETDIR/usr/share/applications/calamares.desktop
+
+        # Enable plymouth
+        chroot $TARGETDIR plymouth-set-default-theme -R cereus_simply >>$LOG 2>&1
+        
         rmdir $TARGETDIR/mnt/target
     else
         # mount required fs
@@ -1459,7 +1467,7 @@ fi
 #
 DIALOG --title "${BOLD}${RED} Enter the void ... ${RESET}" --msgbox "\n
 Welcome to the Cereus Linux installation. A simple and minimal \
-Linux respin based on Void Linux which includes XBPS a new \
+Linux distribution based on Void Linux which includes XBPS a new \
 alternative binary package system; with the purpose to provide an \
 user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
