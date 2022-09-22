@@ -1,145 +1,102 @@
 #!/bin/sh
 
-ARCH=
-IMAGE=
+set -eu
+
+ARCH=$(uname -m)
+IMAGES="base xfce cinnamon plasma lxqt fluxbox i3wm lxde"
+REPO=
+DATE=$(date +%Y.%m.%d)
+
+help() {
+    echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt | fluxbox | i3wm | lxde ] [-r repo]" >&2
+}
 
 while getopts "a:b:hr:" opt; do
 case $opt in
 	a) ARCH="$OPTARG";;
 	b) IMAGE="$OPTARG";;
-	h) echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt | fluxbox | i3wm | lxde ] [-r repo]" >&2; exit 1;;
-	r) REPO="-r $OPTARG $REPO";;
+    h) help; exit 0;;
+    r) REPO="-r $OPTARG $REPO";;
+    *) help; exit 1;;
 esac
 done
 shift $((OPTIND - 1))
 
-: ${ARCH:=$(uname -m)}
+build_variant() {
+    variant="$1"
+    CEREUS_INCLUDEDIR="$PWD/includedir"
+    IMG=cereus-live-${ARCH}-${DATE}-${variant}.iso
+    GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
+    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $GRUB_PKGS"
+    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-pipewire pipewire gstreamer1-pipewire wireplumber pipewire-doc pulseaudio-utils"
 
-readonly CEREUS_INCLUDEDIR="$PWD/includedir"
-readonly REPO_CORE=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH}
-readonly REPO_EXTRA=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}
+# Declare base repositories url
+    VOID_REPO="https://repo-default.voidlinux.org/current"
+    CEREUS_REPO="https://sourceforge.net/projects/cereus-linux/files/repos"
+    REPO_EXTRA="${CEREUS_REPO}/cereus-extra/${ARCH}"
+    REPO_CORE="${CEREUS_REPO}/cereus-core/${ARCH}"
 
-readonly DATE=$(date +%Y%m%d)
-readonly BASE_IMG=cereus-live-${ARCH}-${DATE}.iso
-readonly XFCE_IMG=cereus-live-${ARCH}-${DATE}-xfce.iso
-readonly CINNAMON_IMG=cereus-live-${ARCH}-${DATE}-cinnamon.iso
-readonly PLASMA_IMG=cereus-live-${ARCH}-${DATE}-plasma.iso
-readonly LXQT_IMG=cereus-live-${ARCH}-${DATE}-lxqt.iso
+# Default common themes among all editions
+    THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
-# UNOFFICIAL
-readonly FLUXBOX_IMG=cereus-live-${ARCH}-${DATE}-fluxbox.iso
-readonly I3WM_IMG=cereus-live-${ARCH}-${DATE}-i3wm.iso
-readonly LXDE_IMG=cereus-live-${ARCH}-${DATE}-lxde.iso
+# Default common base packages among all editions, except the base one.
+    CEREUS_BASEPKGS="$BASE_PKGS $ARCH_PKGS calamares-cereus elogind simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps-git python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip plymouth cereus-plymouth-theme libva-utils sof-firmware sudo"
 
-# END OF UNOFFICIAL
-
-readonly GRUB="grub-i386-efi grub-x86_64-efi"
-
-readonly BASE_PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony $GRUB"
-readonly X_PKGS="$BASE_PKGS xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-pipewire pipewire gstreamer1-pipewire wireplumber pipewire-doc pulseaudio-utils"
-
-GLIBC_PKGS=""
-MUSL_PKGS=""
-X64_PKGS=""
-X32_PKGS=""
-REPO_MULTILIB=""
-REPO_MULTILIB_NONFREE=""
-LIBC_PKGS="${MUSL_PKGS} ${GLIBC_PKGS}"
-ARCH_PKGS="${X64_PKGS} ${X32_PKGS}"
-
+# Change locale.conf for calamares depending on target libc and set specific arch pkgs
 case ${ARCH} in
     x86_64)
-        X64_PKGS="firefox"
-        GLIBC_PKGS="void-repo-multilib"
-        REPO_NONFREE="https://repo-default.voidlinux.org/current/nonfree"
-        REPO_MULTILIB="https://repo-default.voidlinux.org/current/multilib"
-        REPO_MULTILIB_NONFREE="https://repo-default.voidlinux.org/current/multilib/nonfree"
+        ARCH_PKGS="void-repo-multilib"
+        REPO_NONFREE="${VOID_REPO}/nonfree"
+        REPO_MULTILIB="${VOID_REPO}/multilib"
+        REPO_MULTILIB_NONFREE="${VOID_REPO}/multilib/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf 
 ;;
     *-musl)
-        X64_PKGS="firefox"
-		# MUSL_PKGS="musl-locales"
-        REPO_NONFREE="https://repo-default.voidlinux.org/current/musl/nonfree"
+        ARCH_PKGS=""
+        REPO_NONFREE="${VOID_REPO}/musl/nonfree"
         sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
     i686)
-        X32_PKGS="midori"
-        REPO_NONFREE="https://repo-default.voidlinux.org/current/nonfree"
+        ARCH_PKGS=""
+        REPO_NONFREE="${VOID_REPO}/nonfree"
         sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf  ;;
 esac
 
-readonly THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
+    case $variant in
+        base) ;;
+        xfce)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin thunar-archive-plugin evince xarchiver"
+        ;;
+        cinnamon)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit xviewer"
+        ;;
+        plasma)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
+        ;;
+        lxqt)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps picom network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker"
+        ;;
+        # UNOFFICIAL EDITIONS
+        fluxbox)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook"
+        # Still incomplete
+        i3wm)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter lightdm-gtk-greeter-settings i3-gaps"
+        lxde)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter lightdm-gtk-greeter-settings gvfs-afc gvfs-mtp gvfs-smb udisks2"
+        *)
+            >&2 echo "Unknown variant $variant"
+            exit 1
+        ;;
 
-readonly CEREUS_BASEPKGS="$BASE_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS calamares-cereus elogind simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps-git python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip plymouth cereus-plymouth-theme libva-utils sof-firmware sudo"
+		./mklive.sh -a "$ARCH" -o $IMG -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" "${REPO}" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" -T "Cereus Linux" -v "linux5.15" "$@"
 
-readonly XFCE_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin thunar-archive-plugin evince xarchiver"
+    esac
 
-readonly CINNAMON_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit"
-
-readonly PLASMA_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
-
-readonly LXQT_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps picom network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker"
-
-# UNOFFICIAL
-
-FLUXBOX_PKGS="$X_PKGS $THEMES_PKGS $LIBC_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen Sierra-Dark-Fluxbox arandr xidlehook"
-
-readonly I3WM_PKGS=""
-readonly LXDE_PKGS=""
-
-# END OF UNOFFICIAL
-
-[ ! -x mklive.sh ] && exit 0
-
-if [ -z "$IMAGE" -o "$IMAGE" = base ]; then
-	if [ ! -e $BASE_IMG ]; then
-		./mklive.sh -a $ARCH -o $BASE_IMG -I "$CEREUS_INCLUDEDIR/base" -p "$BASE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Base" -v "linux5.15" "$@"
-	fi
-fi
-if [ -z "$IMAGE" -o "$IMAGE" = xfce ]; then
-	if [ ! -e $XFCE_IMG ]; then
-		./mklive.sh -a $ARCH -o $XFCE_IMG -I "$CEREUS_INCLUDEDIR/xfce" -p "$XFCE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux XFCE" -v "linux5.15" "$@"
-	fi
-fi
-if [ -z "$IMAGE" -o "$IMAGE" = cinnamon ]; then
-	if [ ! -e $CINNAMON_IMG ]; then
-		./mklive.sh -a $ARCH -o $CINNAMON_IMG -I "$CEREUS_INCLUDEDIR/cinnamon" -p "$CINNAMON_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA}  -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Cinnamon" -v "linux5.15" "$@"
-	fi
-fi
-if [ -z "$IMAGE" -o "$IMAGE" = lxqt ]; then
-	if [ ! -e $LXQT_IMG ]; then
-		./mklive.sh -a $ARCH -o $LXQT_IMG -I "$CEREUS_INCLUDEDIR/lxqt/" -p "$LXQT_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux LXQt" -v "linux5.15" "$@"
-	fi
-fi
-if [ -z "$IMAGE" -o "$IMAGE" = plasma ]; then
-	if [ ! -e $PLASMA_IMG ]; then
-		./mklive.sh -a $ARCH -o $PLASMA_IMG -I "$CEREUS_INCLUDEDIR/plasma" -p "$PLASMA_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Plasma" -v "linux5.15" "$@"
-	fi
+if [ ! -x mklive.sh ]; then
+    echo mklive.sh not found >&2
+    exit 1
 fi
 
-# UNOFFICIAL
-
-if [ -z "$IMAGE" -o "$IMAGE" = fluxbox ]; then
-	if [ ! -e $FLUXBOX_IMG ]; then
-
-        case ${ARCH} in
-            *-musl)
-                FLUXBOX_PKGS="$FLUXBOX_PKGS picom-ibhagwan" ;;
-            *)
-                FLUXBOX_PKGS="$FLUXBOX_PKGS picom-jonaburg" ;;
-        esac
-
-		./mklive.sh -a $ARCH -o $FLUXBOX_IMG -I "$CEREUS_INCLUDEDIR/fluxbox" -p "$FLUXBOX_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux Fluxbox" -v "linux5.15" "$@"
-	fi
-fi
-
-if [ -z "$IMAGE" -o "$IMAGE" = i3wm ]; then
-	if [ ! -e $I3WM_IMG ]; then
-		./mklive.sh -a $ARCH -o $I3WM_IMG -I "$CEREUS_INCLUDEDIR/i3wm" -p "$I3WM_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux i3wm" -v "linux5.15" "$@"
-	fi
-fi
-
-if [ -z "$IMAGE" -o "$IMAGE" = lxde ]; then
-	if [ ! -e $LXDE_IMG ]; then
-		./mklive.sh -a $ARCH -o $LXDE_IMG -I "$CEREUS_INCLUDEDIR/lxde" -p "$LXDE_PKGS" ${REPO} -r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE} -T "Cereus Linux LXDE" -v "linux5.15" "$@"
-	fi
-fi
+for image in $IMAGES; do
+    build_variant "$image"
+done

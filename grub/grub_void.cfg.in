@@ -23,8 +23,6 @@ if loadfont "(${voidlive})/boot/grub/fonts/unicode.pf2" ; then
     insmod gfxmen
     insmod jpeg
     insmod png
-
-    background_image "(${voidlive})/usr/share/backgrounds/grub-img.png"
 fi
 
 if [ cpuid -l ]; then
