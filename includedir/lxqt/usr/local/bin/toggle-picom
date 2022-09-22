@@ -1,0 +1,15 @@
+#!/bin/bash
+
+function detect {
+	 pgrep -u $UID -x picom
+	 exitstatus=$?
+}
+
+detect
+
+if [ $exitstatus = 0 ]; then
+	echo "Stopping compositor"
+	pkill picom
+else
+	picom -b --experimental-backends
+fi
