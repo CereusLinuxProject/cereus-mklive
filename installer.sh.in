@@ -43,7 +43,7 @@ FILESYSTEMS_DONE=
 
 TARGETDIR=/mnt/target
 LOG=/dev/tty8
-CONF_FILE=/tmp/.void-installer.conf
+CONF_FILE=/tmp/.cereus-installer.conf
 if [ ! -f $CONF_FILE ]; then
     touch -f $CONF_FILE
 fi
@@ -1253,13 +1253,13 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         . /etc/default/live.conf
         rm -f $TARGETDIR/etc/motd
         rm -f $TARGETDIR/etc/issue
-        rm -f $TARGETDIR/usr/sbin/void-installer
+        rm -f $TARGETDIR/usr/sbin/cereus-installer
         # Remove modified sddm.conf to let sddm use the defaults.
         rm -f $TARGETDIR/etc/sddm.conf
         # Remove live user.
         echo "Removing $USERNAME live user from targetdir ..." >$LOG
         chroot $TARGETDIR userdel -r $USERNAME >$LOG 2>&1
-        rm -f $TARGETDIR/etc/sudoers.d/99-void-live
+        rm -f $TARGETDIR/etc/sudoers.d/99-cereus-live
         TITLE="Check $LOG for details ..."
         INFOBOX "Rebuilding initramfs for target ..." 4 60
         echo "Rebuilding initramfs for target ..." >$LOG
@@ -1331,7 +1331,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         elif [ -n "$_dev" -a "$_type" = "static" ]; then
             # static IP through dhcpcd.
             mv $TARGETDIR/etc/dhcpcd.conf $TARGETDIR/etc/dhdpcd.conf.orig
-            echo "# Static IP configuration set by the void-installer for $_dev." \
+            echo "# Static IP configuration set by the cereus-installer for $_dev." \
                 >$TARGETDIR/etc/dhcpcd.conf
             echo "interface $_dev" >>$TARGETDIR/etc/dhcpcd.conf
             echo "static ip_address=$_ip" >>$TARGETDIR/etc/dhcpcd.conf
@@ -1354,22 +1354,22 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         unset USERLOGIN
     fi
 
-    if [ -f $TARGETDIR/etc/doas.conf ]; then
+    if [ -f $TARGETDIR/usr/bin/doas ]; then
         USERLOGIN="$(get_option USERLOGIN)"
+        
         if [ -z "$(echo $(get_option USERGROUPS) | grep -w wheel)" -a -n "$USERLOGIN" ]; then
             # enable doas for primary user USERLOGIN who is not member of wheel
-            echo "# Enable doas for login '$USERLOGIN'" >> $TARGETDIR/etc/doas.conf
-            echo "permit persist :$USERLOGIN" >> $TARGETDIR/etc/doas.conf
+            echo "permit persist :$USERLOGIN" > $TARGETDIR/etc/doas.conf
         else
             # enable the sudoers entry for members of group wheel
-            echo "permit persist :wheel" >> $TARGETDIR/etc/doas.conf
+            echo "permit persist :wheel" > $TARGETDIR/etc/doas.conf
         fi
         unset USERLOGIN
     fi
 
 
     # clean up polkit rule - it's only useful in live systems
-    rm -f $TARGETDIR/etc/polkit-1/rules.d/void-live.rules
+    rm -f $TARGETDIR/etc/polkit-1/rules.d/cereus-live.rules
 
     # enable text console for grub if chosen
     if [ "$(get_option TEXTCONSOLE)" = "1" ]; then
@@ -1493,7 +1493,7 @@ if ! command -v dialog >/dev/null; then
 fi
 
 if [ "$(id -u)" != "0" ]; then
-   echo "void-installer must run as root" 1>&2
+   echo "cereus-installer must run as root" 1>&2
    exit 1
 fi
 
@@ -1505,7 +1505,7 @@ Welcome to the Cereus Linux installation. A simple and minimal \
 Linux distribution based on Void Linux with the purpose to provide \
 an user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
-please create any issue at ${BOLD}https://github.com/cereuslinux/cereus-mklive${RESET}.\n\n
+please create any issue at ${BOLD}https://github.com/cereuslinuxproject/cereus-mklive${RESET}.\n\n
 Also, we recommend to read the official Void documentation: ${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
 
 while true; do
