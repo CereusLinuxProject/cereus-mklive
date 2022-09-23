@@ -82,7 +82,7 @@ esac
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
         ;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps picom network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot midori galculator-gtk3 qpdfview xed-xapps picom network-manager-applet pasystray-git licorice-openbox-theme-cereus light-locker qterminal-cereus-colorscheme"
         ;;
         # UNOFFICIAL EDITIONS
         fluxbox)
