@@ -1,6 +1,6 @@
 
 set pager="1"
-set locale_dir="(${voidlive})/boot/grub/locale"
+set locale_dir="(${cereuslive})/boot/grub/locale"
 
 if [ -e "${prefix}/${grub_cpu}-${grub_platform}/all_video.mod" ]; then
     insmod all_video
@@ -13,7 +13,7 @@ fi
 
 insmod font
 
-if loadfont "(${voidlive})/boot/grub/fonts/unicode.pf2" ; then
+if loadfont "(${cereuslive})/boot/grub/fonts/unicode.pf2" ; then
     insmod gfxterm
     set gfxmode="auto"
     
@@ -28,20 +28,20 @@ fi
 if [ cpuid -l ]; then
     menuentry "@@BOOT_TITLE@@ @@KERNVER@@ (@@ARCH@@)" {
         set gfxpayload="keep"
-        linux (${voidlive})/boot/vmlinuz \
+        linux (${cereuslive})/boot/vmlinuz \
 		root=live:CDLABEL=VOID_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
 		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@
-        initrd (${voidlive})/boot/initrd
+        initrd (${cereuslive})/boot/initrd
     }
     menuentry "@@BOOT_TITLE@@ @@KERNVER@@ (@@ARCH@@) (RAM)" {
         set gfxpayload="keep"
-        linux (${voidlive})/boot/vmlinuz \
+        linux (${cereuslive})/boot/vmlinuz \
 		root=live:CDLABEL=VOID_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
 		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@ rd.live.ram
-        initrd (${voidlive})/boot/initrd
+        initrd (${cereuslive})/boot/initrd
     }
 fi
