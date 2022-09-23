@@ -5,26 +5,25 @@ Welcome to the Cereus Linux Live system. Two users are available to log in:
 	- root:cereus
 	- cereus:cereus
 
-The `cereus` user additionally has `sudo(8)` permissions to run any command
+The `cereus` user additionally has `sudo(8)` and/or `doas(8)` permissions to run any command
 without a password.
 
-To start the TUI installation please type:
+To start the TUI installation (for example, on base edition) please type:
 
-    # void-installer
+    # cereus-installer
 
-To start the GUI installation, open the `Install System` launcher after logging in.
+To start the GUI installation, open the `Install System` launcher (Calamares) after logging in. And follow the on-screen instructions. 
 
-and follow the on-screen instructions. To install additional software make
-sure to configure your network interface and then use:
+To install additional software make sure to configure your network interface and then use:
 
 	- xbps-install(1) to install/update packages
 	- xbps-query(1) to query for package info
 
-The Void Linux Handbook is also available for offline access in multiple
-formats, and can be accessed with the `void-docs(1)` utility.
+Alternatively, if you chose a GUI edition, you can use OctoXBPS also.
+The Void Linux Handbook is also available for offline access in multiple formats, and can be accessed with the `void-docs(1)` utility.
 
 Thanks for using Cereus Linux.
 
-    https://sourceforge.net/projects/cereus-linux/
+    https://cereuslinuxproject.github.io
 
 ###############################################################################
