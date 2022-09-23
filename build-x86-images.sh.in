@@ -27,7 +27,7 @@ shift $((OPTIND - 1))
 case $SU_PKG in
     sudo) SU_PKG="sudo";;
     doas) SU_PKG="opendoas";;
-    *) echo "SU_PKG: Invalid option $SU_PKG";;
+    *) echo "SU_PKG: Invalid option $SU_PKG"; exit 1;;
 esac
 
 build_variant() {
