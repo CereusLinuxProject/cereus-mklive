@@ -5,22 +5,30 @@ set -eu
 ARCH=$(uname -m)
 IMAGES="base xfce cinnamon plasma lxqt fluxbox i3wm lxde"
 REPO=
+SU_PKG=sudo
 DATE=$(date +%Y.%m.%d)
 
 help() {
-    echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt | fluxbox | i3wm | lxde ] [-r repo]" >&2
+    echo "${0#/*}: [-a arch] [-b base | xfce | cinnamon | plasma | lxqt | fluxbox | i3wm | lxde ] [-r repo] [-s sudo | doas ]" >&2
 }
 
-while getopts "a:b:hr:" opt; do
+while getopts "a:b:hr:s:" opt; do
 case $opt in
 	a) ARCH="$OPTARG";;
-	b) IMAGE="$OPTARG";;
+	b) IMAGES="$OPTARG";;
     h) help; exit 0;;
     r) REPO="-r $OPTARG $REPO";;
+    s) SU_PKG="$OPTARG";;
     *) help; exit 1;;
 esac
 done
 shift $((OPTIND - 1))
+
+case $SU_PKG in
+    sudo) SU_PKG="sudo";;
+    doas) SU_PKG="opendoas";;
+    *) echo "SU_PKG: Invalid option $SU_PKG";;
+esac
 
 build_variant() {
     variant="$1"
@@ -28,7 +36,7 @@ build_variant() {
     IMG=cereus-live-${ARCH}-${DATE}-${variant}.iso
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     ARCH_PKGS=""
-    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $GRUB_PKGS"
+    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $SU_PKG $GRUB_PKGS"
     XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-pipewire pipewire gstreamer1-pipewire wireplumber pipewire-doc pulseaudio-utils"
 
 # Declare base repositories url
@@ -41,7 +49,7 @@ build_variant() {
     THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus elogind simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps-git python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip plymouth cereus-plymouth-theme libva-utils sof-firmware sudo"
+    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus elogind simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps-git python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip plymouth cereus-plymouth-theme libva-utils sof-firmware"
 
 # Change locale.conf for calamares depending on target libc and set specific arch pkgs
 case ${ARCH} in
@@ -93,7 +101,7 @@ esac
         ;;
     esac
 
-	./mklive.sh -a "$ARCH" -o $IMG -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" "${REPO}" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" -T "Cereus Linux" -v "linux5.15" "$@"
+	./mklive.sh -a "$ARCH" -o $IMG -v "linux5.15" -T "Cereus Linux" -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" ${REPO} "$@"
 
 }
 
