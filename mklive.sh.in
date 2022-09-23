@@ -153,6 +153,12 @@ generate_initramfs() {
         --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" $KERNELVERSION
     [ $? -ne 0 ] && die "Failed to generate the initramfs"
 
+        # Apply Plymouth theme
+        if [ -f "$ROOTFS/etc/plymouth/plymouthd.conf" ]; then
+            chroot "$ROOTFS" plymouth-set-default-theme -R cereus_simply
+            [ $? -ne 0 ] && echo "Failed to apply plymouth theme"
+        fi 
+
     mv "$ROOTFS"/boot/initrd "$BOOT_DIR"
     cp "$ROOTFS"/boot/vmlinuz-$KERNELVERSION "$BOOT_DIR"/vmlinuz
 }
@@ -192,14 +198,14 @@ generate_isolinux_boot() {
 
 generate_grub_efi_boot() {
     cp -f grub/grub.cfg "$GRUB_DIR"
-    cp -f grub/grub_void.cfg.in "$GRUB_DIR"/grub_void.cfg
+    cp -f grub/grub_cereus.cfg.in "$GRUB_DIR"/grub_cereus.cfg
     sed -i  -e "s|@@SPLASHIMAGE@@|$(basename "${SPLASH_IMAGE}")|" \
         -e "s|@@KERNVER@@|${KERNELVERSION}|" \
         -e "s|@@KEYMAP@@|${KEYMAP}|" \
         -e "s|@@ARCH@@|$BASE_ARCH|" \
         -e "s|@@BOOT_TITLE@@|${BOOT_TITLE}|" \
         -e "s|@@BOOT_CMDLINE@@|${BOOT_CMDLINE}|" \
-        -e "s|@@LOCALE@@|${LOCALE}|" "$GRUB_DIR"/grub_void.cfg
+        -e "s|@@LOCALE@@|${LOCALE}|" "$GRUB_DIR"/grub_cereus.cfg
     mkdir -p "$GRUB_DIR"/fonts
     cp -f "$GRUB_DATADIR"/unicode.pf2 "$GRUB_DIR"/fonts
 
@@ -270,7 +276,7 @@ generate_iso_image() {
         -iso-level 3 -rock -joliet \
         -max-iso9660-filenames -omit-period \
         -omit-version-number -relaxed-filenames -allow-lowercase \
-        -volid "VOID_LIVE" \
+        -volid "CEREUS_LIVE" \
         -eltorito-boot boot/isolinux/isolinux.bin \
         -eltorito-catalog boot/isolinux/boot.cat \
         -no-emul-boot -boot-load-size 4 -boot-info-table \
@@ -391,7 +397,7 @@ if [ "$?" -ne "0" ]; then
     die "Failed to find kernel package version"
 fi
 
-: ${OUTPUT_FILE="void-live-${BASE_ARCH}-${KERNELVERSION}-$(date +%Y%m%d).iso"}
+: ${OUTPUT_FILE="cereus-live-${BASE_ARCH}-${KERNELVERSION}-$(date +%Y.%m%.d).iso"}
 
 print_step "Installing software to generate the image: ${REQUIRED_PKGS} ..."
 install_prereqs
