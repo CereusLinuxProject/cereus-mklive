@@ -5,6 +5,8 @@ set -eu
 ARCH=$(uname -m)
 IMAGES="base xfce cinnamon plasma lxqt fluxbox i3wm lxde"
 REPO=
+REPO_MULTILIB=
+REPO_MULTILIB_NONFREE=
 SU_PKG=sudo
 DATE=$(date +%Y.%m.%d)
 
