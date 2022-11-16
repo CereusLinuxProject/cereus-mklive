@@ -331,8 +331,13 @@ rk33xx_flash_uboot() {
 # repodata files for the selected architecture.
 : "${XBPS_REPOSITORY:=--repository=https://repo-default.voidlinux.org/current \
                       --repository=https://repo-default.voidlinux.org/current/musl \
-                      --repository=https://repo-default.voidlinux.org/current/aarch64}"
-
+                      --repository=https://repo-default.voidlinux.org/current/aarch64 \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/x86_64 \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/x86_64 \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/i686 \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/i686 \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/x86_64-musl \
+                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/x86_64-musl}"
 
 # This library is the authoritative source of the platform map,
 # because of this we may need to get this information from the command

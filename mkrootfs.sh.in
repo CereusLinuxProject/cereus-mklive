@@ -74,7 +74,7 @@ _EOF
 # ########################################
 
 # Set the default system package.
-SYSPKG="base-voidstrap"
+SYSPKG="base-cereustrap"
 
 # Boilerplate option parsing.  This script supports the bare minimum
 # needed to build an image.
@@ -87,7 +87,7 @@ while getopts "b:C:c:hr:x:o:V" opt; do
         r) XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=$OPTARG";;
         x) COMPRESSOR_THREADS="$OPTARG" ;;
         o) FILENAME="$OPTARG" ;;
-        V) echo "$PROGNAME @@MKLIVE_VERSION@@"; exit 0;;
+        V) echo "$PROGNAME 0.22 767208c"; exit 0;;
     esac
 done
 shift $((OPTIND - 1))
@@ -191,11 +191,11 @@ run_cmd_chroot "$ROOTFS" "xbps-reconfigure -a"
 # chrooted.  We also remove the lock file in this step to clean up the
 # lock on the passwd database, lest it be left in the system and
 # propogated to other points.
-info_msg "Setting the default root password ('voidlinux')"
+info_msg "Setting the default root password ('cereus')"
 if [ ! -f "$ROOTFS/etc/shadow" ] ; then
     run_cmd_chroot "$ROOTFS" pwconv
 fi
-echo root:voidlinux | run_cmd_chroot "$ROOTFS" "chpasswd -c SHA512" || die "Could not set default credentials"
+echo root:cereus | run_cmd_chroot "$ROOTFS" "chpasswd -c SHA512" || die "Could not set default credentials"
 rm -f "$ROOTFS/etc/.pwd.lock"
 
 # At this point we're done running things in the chroot and we can
@@ -210,7 +210,7 @@ rm -rf "$ROOTFS/var/cache/*" 2>/dev/null
 
 # Finally we can compress the tarball, the name will include the
 # architecture and the date on which the tarball was built.
-: "${FILENAME:=void-${XBPS_TARGET_ARCH}-ROOTFS-$(date '+%Y%m%d').tar.xz}"
+: "${FILENAME:=cereus-${XBPS_TARGET_ARCH}-ROOTFS-$(date +%Y.%m.%d).tar.xz}"
 run_cmd "tar -cp --posix --xattrs -C $ROOTFS . | xz -T${COMPRESSOR_THREADS:-0} -9 > $FILENAME "
 
 # Now that we have the tarball we don't need the rootfs anymore, so we
