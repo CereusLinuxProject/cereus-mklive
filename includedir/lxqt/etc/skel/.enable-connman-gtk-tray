@@ -1,0 +1,7 @@
+#!/bin/sh
+for key in status-icon-enabled launch-to-tray; do
+    gsettings set net.connman.gtk ${key} true
+done
+
+rm $HOME/.enable-connman-gtk-tray
+rm $HOME/.config/autostart/enable-connman-gtk-tray.desktop
