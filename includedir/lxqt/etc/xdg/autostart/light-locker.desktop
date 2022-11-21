@@ -1,6 +1,0 @@
-[Desktop Entry]
-Exec=light-locker --no-idle-hint --no-lock-on-lid --no-lock-on-suspend --no-late-locking
-Name=Lockscreen service
-Type=Application
-Version=1.0
-Name[en_US]=light-locker.desktop
