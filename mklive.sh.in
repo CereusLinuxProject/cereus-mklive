@@ -142,6 +142,12 @@ install_packages() {
 
 copy_include_directory() {
     find "$INCLUDE_DIRECTORY" -mindepth 1 -maxdepth 1 -exec cp -rfpPv {} "$ROOTFS"/ \;
+
+    # Correct includedir permissions.
+    touch .includedir_list
+    find "${INCLUDE_DIRECTORY}" | sed 's|'"${INCLUDE_DIRECTORY}"'|'"$ROOTFS"'|g' | tee .includedir_list >/dev/null
+    chown root:root $(cat .includedir_list)
+    rm .includedir_list
 }
 
 generate_initramfs() {
