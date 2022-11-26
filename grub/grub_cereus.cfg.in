@@ -29,7 +29,7 @@ if [ cpuid -l ]; then
     menuentry "@@BOOT_TITLE@@ @@KERNVER@@ (@@ARCH@@)" {
         set gfxpayload="keep"
         linux (${cereuslive})/boot/vmlinuz \
-		root=live:CDLABEL=VOID_LIVE ro init=/sbin/init \
+		root=live:CDLABEL=CEREUS_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
 		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@
@@ -38,7 +38,7 @@ if [ cpuid -l ]; then
     menuentry "@@BOOT_TITLE@@ @@KERNVER@@ (@@ARCH@@) (RAM)" {
         set gfxpayload="keep"
         linux (${cereuslive})/boot/vmlinuz \
-		root=live:CDLABEL=VOID_LIVE ro init=/sbin/init \
+		root=live:CDLABEL=CEREUS_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
 		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@ rd.live.ram
