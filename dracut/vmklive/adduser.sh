@@ -60,3 +60,10 @@ fi
 if [ -n "$AUTOLOGIN" ]; then
         sed -i "s,GETTY_ARGS=\"--noclear\",GETTY_ARGS=\"--noclear -a $USERNAME\",g" ${NEWROOT}/etc/sv/agetty-tty1/conf
 fi
+
+# Override default XFCE wallpaper
+XFCE_DEFAULT_WALLPAPER="${NEWROOT}/usr/share/backgrounds/xfce/xfce-verticals.png"
+if [ -f $XFCE_DEFAULT_WALLPAPER ]; then
+    rm $XFCE_DEFAULT_WALLPAPER
+    ln -frs ${NEWROOT}/usr/share/backgrounds/wallpaper4.png $XFCE_DEFAULT_WALLPAPER
+fi
