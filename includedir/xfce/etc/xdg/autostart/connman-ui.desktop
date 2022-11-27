@@ -1,0 +1,8 @@
+[Desktop Entry]
+Exec=connman-ui-gtk
+Name=Connman network manager
+Type=Application
+Version=1.0
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+X-MATE-Autostart-Delay=2
