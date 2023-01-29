@@ -1,9 +1,0 @@
-[user]
-inactiveColor=rgb(0,135,95)
-indicatorColor=rgb(71,131,74)
-forceIconSize=false
-onlyDisplayVisible=true
-onlyDisplayScreen=true
-showPreviews=true
-showWindowCount=true
-pinned=/usr/share/applications/xfce4-terminal.desktop;/usr/share/applications/org.kde.falkon.desktop;/usr/share/applications/thunar.desktop;

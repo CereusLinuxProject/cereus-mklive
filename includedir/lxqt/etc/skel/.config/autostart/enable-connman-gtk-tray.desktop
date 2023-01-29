@@ -1,5 +1,0 @@
-[Desktop Entry]
-Exec=$HOME/.enable-connman-gtk-tray
-Name=Enable Connman GTK tray icon
-Type=Application
-Version=1.0
