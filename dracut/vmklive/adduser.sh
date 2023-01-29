@@ -22,9 +22,15 @@ if ! grep -q ${USERSHELL} ${NEWROOT}/etc/shells ; then
     echo ${USERSHELL} >> ${NEWROOT}/etc/shells
 fi
 
-# Create new user and remove password. We'll use autologin by default.
-chroot ${NEWROOT} groupadd autologin
-chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel,network,autologin -s $USERSHELL $USERNAME
+# Create new user and remove password.
+chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel -s $USERSHELL $USERNAME
+
+# If emptty is installed create also nopasswdlogin group
+if [ -f ${NEWROOT}/usr/bin/emptty ]; then
+    chroot ${NEWROOT} groupadd nopasswdlogin
+    chroot ${NEWROOT} usermod -aG nopasswdlogin $USERNAME
+fi
+
 chroot ${NEWROOT} passwd -d $USERNAME >/dev/null 2>&1
 
 # Setup default root/user password (cereus).
@@ -38,7 +44,8 @@ fi
 
 # Enable doas permission by default.
 if [ -f ${NEWROOT}/usr/bin/doas ]; then
-    echo "permit nopass :${USERNAME}" > "$NEWROOT/etc/doas.conf"
+    echo "permit nopass :wheel 
+permit nopass :root" > "$NEWROOT/etc/doas.conf"
 fi
 
 if [ -d ${NEWROOT}/etc/polkit-1 ]; then
