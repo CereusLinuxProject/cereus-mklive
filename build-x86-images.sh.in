@@ -36,11 +36,12 @@ esac
 build_variant() {
     variant="$1"
     CEREUS_INCLUDEDIR="$PWD/includedir"
-    IMG=cereus-live-${ARCH}-${variant}-${SU_PKG}-${DATE}.iso
-    GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
+    IMG=cereus-beta-live-${ARCH}-${variant}-${SU_PKG}-${DATE}.iso
+    GRUB_PKGS="grub-cereus-i386-efi grub-cereus-x86_64-efi"
     ARCH_PKGS=""
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $SU_PKG $GRUB_PKGS"
-    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf alsa-pipewire pipewire gstreamer1-pipewire wireplumber pipewire-doc pulseaudio-utils"
+    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf pipewire-doc"
+    SERVICES="chronyd"
 
 # Declare base repositories url
     VOID_REPO="https://repo-default.voidlinux.org/current"
@@ -52,7 +53,7 @@ build_variant() {
     THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus elogind simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh bluez fonts-roboto-ttf gparted gst-libav gst-plugins-base1 gst-plugins-good1 hplip-gui htop jetbrains-mono-font ksuperkey kvantum libcups-filters mpv mypaint nerd-fonts-symbols octoxbps-git python3-cups python3-cupshelpers system-config-printer system-config-printer-udev vpm vsv xtools numlockx broadcom-wl-dkms xdg-user-dirs hardinfo timeshift psmisc breeze ntfs-3g touchegg touchegg-gce xz unrar unzip zip plymouth cereus-plymouth-theme libva-utils sof-firmware libspa-bluetooth connman-ui connman-gtk connman-ncurses falkon"
+    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip falkon qt5ct"
 
 # Change locale.conf for calamares depending on target libc and set specific arch pkgs
 case ${ARCH} in
@@ -71,29 +72,37 @@ case ${ARCH} in
 esac
 
     case $variant in
-        base) ;;
+        base) 
+            SERVICES="$SERVICES dhcpcd wpa_supplicant acpid";;
         xfce)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings xfce4 gnome-themes-standard gnome-keyring gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin thunar-archive-plugin evince xarchiver blueman rhythmbox xfce4-screenshooter xfce4-plugins galculator-gtk3 material-black-cereus-xfwm qt5ct xfce4-docklike-plugin mugshot"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus xfce4 gnome-themes-standard gnome-keyring gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin thunar-archive-plugin evince xarchiver blueman rhythmbox xfce4-screenshooter xfce4-plugins galculator-gtk3 material-black-cereus-xfwm qt5ct xfce4-docklike-plugin mugshot"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         cinnamon)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit xviewer"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit xviewer"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         plasma)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg sddm"
         ;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxqt gvfs-afc gvfs-mtp gvfs-smb udisks2 lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings CopyQ blueman strawberry flameshot galculator-gtk3 qpdfview xed-xapps picom picom-manager pasystray-git licorice-openbox-theme-cereus qterminal-cereus-colorscheme"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus CopyQ strawberry galculator-gtk3 qpdfview xed-xapps emptty"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         # UNOFFICIAL EDITIONS
         fluxbox)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter lightdm-gtk-greeter-settings pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg"
             ;;
         # Still incomplete
         i3wm)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter lightdm-gtk-greeter-settings i3-gaps"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus i3-gaps"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
             ;;
         lxde)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter lightdm-gtk-greeter-settings gvfs-afc gvfs-mtp gvfs-smb udisks2"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus gvfs-afc gvfs-mtp gvfs-smb udisks2"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
             ;;
         *)
             >&2 echo "Unknown variant $variant"
@@ -101,7 +110,7 @@ esac
         ;;
     esac
 
-	./mklive.sh -a "$ARCH" -o $IMG -v "linux5.15" -T "Cereus Linux" -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" ${REPO} "$@"
+	./mklive.sh -a "$ARCH" -o $IMG -v "linux5.15" -T "Cereus Linux" -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" -S "$SERVICES" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" ${REPO} "$@"
 
 }
 
