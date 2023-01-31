@@ -36,7 +36,7 @@ esac
 build_variant() {
     variant="$1"
     CEREUS_INCLUDEDIR="$PWD/includedir"
-    IMG=cereus-beta-live-${ARCH}-${variant}-${SU_PKG}-${DATE}.iso
+    IMG=cereus-beta-live-${ARCH}-${variant}-${DATE}.iso
     GRUB_PKGS="grub-cereus-i386-efi grub-cereus-x86_64-efi"
     ARCH_PKGS=""
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $SU_PKG $GRUB_PKGS"
@@ -53,7 +53,7 @@ build_variant() {
     THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice blesh gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip falkon qt5ct"
+    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip falkon qt5ct"
 
 # Change locale.conf for calamares depending on target libc and set specific arch pkgs
 case ${ARCH} in
@@ -75,7 +75,7 @@ esac
         base) 
             SERVICES="$SERVICES dhcpcd wpa_supplicant acpid";;
         xfce)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus xfce4 gnome-themes-standard gnome-keyring gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin thunar-archive-plugin evince xarchiver blueman rhythmbox xfce4-screenshooter xfce4-plugins galculator-gtk3 material-black-cereus-xfwm qt5ct xfce4-docklike-plugin mugshot"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-xfce-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets evince xarchiver blueman rhythmbox galculator-gtk3 emptty blesh-git"
             SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         cinnamon)
@@ -87,7 +87,7 @@ esac
             SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg sddm"
         ;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus CopyQ strawberry galculator-gtk3 qpdfview xed-xapps emptty"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets CopyQ strawberry galculator-gtk3 qpdfview xed-xapps emptty blesh"
             SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         # UNOFFICIAL EDITIONS
