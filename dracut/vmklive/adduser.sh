@@ -69,8 +69,20 @@ if [ -n "$AUTOLOGIN" ]; then
 fi
 
 # Override default XFCE wallpaper
-XFCE_DEFAULT_WALLPAPER="${NEWROOT}/usr/share/backgrounds/xfce/xfce-verticals.png"
-if [ -f $XFCE_DEFAULT_WALLPAPER ]; then
-    rm $XFCE_DEFAULT_WALLPAPER
-    ln -frs ${NEWROOT}/usr/share/backgrounds/wallpaper4.png $XFCE_DEFAULT_WALLPAPER
+XFCE_DEFAULT_WALLPAPER="${NEWROOT}/usr/share/backgrounds/xfce/xfce-shapes.svg"
+if [ -e $XFCE_DEFAULT_WALLPAPER ]; then
+    mv $XFCE_DEFAULT_WALLPAPER ${NEWROOT}/usr/share/backgrounds/xfce/xfce4-shapes.svg
+    ln -frs ${NEWROOT}/usr/share/backgrounds/svg/wallpaper4.svg $XFCE_DEFAULT_WALLPAPER
 fi
+
+# Determine SU_CMD (unused)
+if [ -e ${NEWROOT}/usr/bin/doas ]; then
+    SU_CMD=doas
+elif [ -e ${NEWROOT}/usr/bin/sudo ]; then
+    SU_CMD=sudo
+fi
+
+# Enable Calamares for autostart
+install -Dm 644 ${NEWROOT}/usr/share/applications/calamares.desktop ${NEWROOT}/etc/xdg/autostart/
+#chown $USERNAME:$USERNAME ${NEWROOT}/home/$USERNAME/Desktop/calamares.desktop
+#$SU_CMD -u $USERNAME dbus-launch gio set ${NEWROOT}/home/$USERNAME/Desktop/calamares.desktop -t string metadata::trusted "true"
