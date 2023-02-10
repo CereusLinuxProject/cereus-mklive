@@ -23,6 +23,7 @@ if loadfont "(${cereuslive})/boot/grub/fonts/unicode.pf2" ; then
     insmod gfxmen
     insmod jpeg
     insmod png
+    background_image -m stretch "(${cereuslive})/boot/isolinux/@@SPLASHIMAGE@@"
 fi
 
 if [ cpuid -l ]; then
@@ -32,7 +33,7 @@ if [ cpuid -l ]; then
 		root=live:CDLABEL=CEREUS_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
-		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@
+		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@ quiet splash
         initrd (${cereuslive})/boot/initrd
     }
     menuentry "@@BOOT_TITLE@@ @@KERNVER@@ (@@ARCH@@) (RAM)" {
@@ -41,7 +42,7 @@ if [ cpuid -l ]; then
 		root=live:CDLABEL=CEREUS_LIVE ro init=/sbin/init \
 		rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \
 		vconsole.unicode=1 vconsole.keymap=@@KEYMAP@@ \
-		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@ rd.live.ram
+		locale.LANG=@@LOCALE@@ @@BOOT_CMDLINE@@ rd.live.ram quiet splash
         initrd (${cereuslive})/boot/initrd
     }
 fi
