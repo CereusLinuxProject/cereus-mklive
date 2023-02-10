@@ -87,7 +87,7 @@ esac
             SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg sddm"
         ;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets CopyQ strawberry galculator-gtk3 qpdfview xed-xapps emptty blesh"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets CopyQ strawberry galculator-gtk3 qpdfview FeatherPad emptty blesh"
             SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
         ;;
         # UNOFFICIAL EDITIONS
@@ -110,7 +110,7 @@ esac
         ;;
     esac
 
-	./mklive.sh -a "$ARCH" -o $IMG -v "linux5.15" -T "Cereus Linux" -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" -S "$SERVICES" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" ${REPO} "$@"
+	./mklive.sh -a "$ARCH" -o $IMG -v "linux6.1" -T "Cereus Linux" -I "$CEREUS_INCLUDEDIR/${variant}" -p "$PKGS" -S "$SERVICES" -r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}" ${REPO} "$@"
 
 }
 
