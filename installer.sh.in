@@ -1141,17 +1141,17 @@ failed to mount $dev on $mntpt! check $LOG for errors." ${MSGBOXSIZE}
 }
 
 mount_filesystems() {
-    for f in sys proc dev; do
+    for f in sys proc dev sys/firmware/efi/efivars; do
         [ ! -d $TARGETDIR/$f ] && mkdir $TARGETDIR/$f
         echo "Mounting $TARGETDIR/$f..." >$LOG
-        mount --bind /$f $TARGETDIR/$f >$LOG 2>&1
+        mount --rbind /$f $TARGETDIR/$f >$LOG 2>&1
     done
 }
 
 umount_filesystems() {
     local f
 
-    for f in sys/fs/fuse/connections sys proc dev; do
+    for f in sys/fs/fuse/connections sys proc dev sys/firmware/efi/efivars; do
         echo "Unmounting $TARGETDIR/$f..." >$LOG
         umount $TARGETDIR/$f >$LOG 2>&1
     done
@@ -1388,8 +1388,8 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
             :
         elif [ "$_type" = "dhcp" ]; then
             if $(echo $_dev|egrep -q "^wl.*" 2>/dev/null); then
-            cp /etc/wpa_supplicant/wpa_supplicant.conf $TARGETDIR/etc/wpa_supplicant
-            ln -sf /etc/sv/wpa_supplicant $TARGETDIR/etc/runit/runsvdir/default/wpa_supplicant
+                cp /etc/wpa_supplicant/wpa_supplicant.conf $TARGETDIR/etc/wpa_supplicant
+                ln -sf /etc/sv/wpa_supplicant $TARGETDIR/etc/runit/runsvdir/default/wpa_supplicant
             fi
             enable_dhcpd
         elif [ -n "$_dev" -a "$_type" = "static" ]; then
