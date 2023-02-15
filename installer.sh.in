@@ -1335,11 +1335,19 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         ls --color=never /usr/src/kernel-headers-6.* >/dev/null
         kheader=$?
 
+        # Mark current kernel as automatically installed (this allows to remove old LTS kernels as orphaned packages).
+        current_kernel="$(xbps-query -S linux-default-cereus | grep ">=" | tail -n1 | cut -d">" -f1)"
+        xbps-pkgdb -r "$TARGETDIR" -m auto "$current_kernel"
+
         if [ "$kheader" = 0 ]; then
-            xbps-remove -r $TARGETDIR -RFy linux-headers >>$LOG 2>&1
+            #kern_dep="$(xbps-query -S linux-headers | grep ">=" | tail -n1 | cut -d">" -f1)"
             mkdir -p $TARGETDIR/etc/xbps.d
             echo "ignorepkg=linux-headers" >> $TARGETDIR/etc/xbps.d/00-ignore.conf
+            xbps-remove -r $TARGETDIR -RFy linux-headers >>$LOG 2>&1
+            #xbps-remove -r $TARGETDIR -y "$kern_dep" >>$LOG 2>&1
         fi
+
+        
 
         INFOBOX "Misc post-install tweaks ..." 4 60
         echo "Misc post-install tweaks ..." >$LOG
