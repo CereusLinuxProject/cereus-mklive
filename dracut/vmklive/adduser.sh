@@ -83,6 +83,9 @@ elif [ -e ${NEWROOT}/usr/bin/sudo ]; then
 fi
 
 # Enable Calamares for autostart
-install -Dm 644 ${NEWROOT}/usr/share/applications/calamares.desktop ${NEWROOT}/etc/xdg/autostart/
+if [ -e ${NEWROOT}/usr/bin/calamares ]; then
+    install -Dm 644 ${NEWROOT}/usr/share/applications/calamares.desktop ${NEWROOT}/etc/xdg/autostart/
+fi
+
 #chown $USERNAME:$USERNAME ${NEWROOT}/home/$USERNAME/Desktop/calamares.desktop
 #$SU_CMD -u $USERNAME dbus-launch gio set ${NEWROOT}/home/$USERNAME/Desktop/calamares.desktop -t string metadata::trusted "true"
