@@ -1,6 +1,4 @@
-#!/bin/sh
-#
-# vim: set ts=4 sw=4 et:
+#!/bin/bash
 #
 #-
 # Copyright (c) 2009-2015 Juan Romero Pardines.
@@ -29,9 +27,12 @@
 trap 'error_out $? $LINENO' INT TERM 0
 umask 022
 
-readonly REQUIRED_PKGS="base-files>=2022.07.03 libgcc dash coreutils sed tar gawk syslinux grub-i386-efi grub-x86_64-efi squashfs-tools xorriso"
+. ./lib.sh
+
+readonly REQUIRED_PKGS="base-files>=2022.07.03 libgcc dash coreutils sed tar gawk syslinux grub-cereus-i386-efi grub-cereus-x86_64-efi memtest86+ squashfs-tools xorriso"
 readonly INITRAMFS_PKGS="binutils xz device-mapper dhclient dracut-network openresolv"
 readonly PROGNAME=$(basename "$0")
+declare -a INCLUDE_DIRS=()
 
 info_msg() {
     printf "\033[1m$@\n\033[m"
@@ -47,13 +48,13 @@ print_step() {
 mount_pseudofs() {
     for f in sys dev proc; do
         mkdir -p "$ROOTFS"/$f
-        mount --bind /$f "$ROOTFS"/$f
+        mount --rbind /$f "$ROOTFS"/$f
     done
 }
 umount_pseudofs() {
-    umount -f "$ROOTFS"/sys >/dev/null 2>&1
-    umount -f "$ROOTFS"/dev >/dev/null 2>&1
-    umount -f "$ROOTFS"/proc >/dev/null 2>&1
+    umount -R -f "$ROOTFS"/sys >/dev/null 2>&1
+    umount -R -f "$ROOTFS"/dev >/dev/null 2>&1
+    umount -R -f "$ROOTFS"/proc >/dev/null 2>&1
 }
 error_out() {
     umount_pseudofs
@@ -62,32 +63,35 @@ error_out() {
 }
 
 usage() {
-    cat <<_EOF
-Usage: $PROGNAME [options]
+	cat <<-EOH
+	Usage: $PROGNAME [options]
 
-Options:
- -a <xbps-arch>     Set XBPS_ARCH (do not use it unless you know what it is)
- -b <system-pkg>    Set an alternative base-system package (defaults to base-system).
- -r <repo-url>      Use this XBPS repository (may be specified multiple times).
- -c <cachedir>      Use this XBPS cache directory (a subdirectory of current
-directory if unset).
- -k <keymap>        Default keymap to use (us if unset)
- -l <locale>        Default locale to use (en_US.UTF-8 if unset).
- -i <lz4|gzip|bzip2|xz> Compression type for the initramfs image (xz if unset).
- -s <gzip|lzo|xz>     Compression type for the squashfs image (xz if unset)
- -o <file>          Output file name for the ISO image (auto if unset).
- -p "pkg pkgN ..."  Install additional packages into the ISO image.
- -I <includedir>    Include directory structure under given path into rootfs
+	Generates a basic live ISO image of Cereus Linux. This ISO image can be written
+	to a CD/DVD-ROM or any USB stick.
 
- -C "cmdline args"  Add additional kernel command line arguments.
- -T "title"         Modify the bootloader title.
- -v linux<version>  Install a custom Linux version on ISO image (linux meta-package if unset).
- -K                 Do not remove builddir.
-
-The $PROGNAME script generates a live image of the Cereus Linux distribution.
-This ISO image can be written to a CD/DVD-ROM or any USB stick.
-_EOF
-    exit 1
+	To generate a more complete live ISO image, use build-x86-images.sh.
+	
+	OPTIONS
+	 -a <arch>          Set XBPS_ARCH in the ISO image
+	 -b <system-pkg>    Set an alternative base package (default: base-cereus)
+	 -r <repo>          Use this XBPS repository. May be specified multiple times
+	 -c <cachedir>      Use this XBPS cache directory (default: ./xbps-cachedir-<arch>)
+	 -k <keymap>        Default keymap to use (default: us)
+	 -l <locale>        Default locale to use (default: en_US.UTF-8)
+	 -i <lz4|gzip|bzip2|xz>
+	                    Compression type for the initramfs image (default: xz)
+	 -s <gzip|lzo|xz>   Compression type for the squashfs image (default: xz)
+	 -o <file>          Output file name for the ISO image (default: automatic)
+	 -p "<pkg> ..."     Install additional packages in the ISO image
+	 -I <includedir>    Include directory structure under given path in the ROOTFS
+	 -S "<service> ..." Enable services in the ISO image
+	 -C "<arg> ..."     Add additional kernel command line arguments
+	 -T <title>         Modify the bootloader title (default: Cereus Linux)
+	 -v linux<version>  Install a custom Linux version on ISO image (default: linux-default-cereus metapackage)
+	 -K                 Do not remove builddir
+	 -h                 Show this help and exit
+	 -V                 Show version and exit
+	EOH
 }
 
 copy_xbps_keys() {
@@ -131,11 +135,6 @@ install_packages() {
     fi
     chroot "$ROOTFS" env -i xbps-reconfigure -a
 
-    if [ -x installer.sh ]; then
-        install -Dm755 installer.sh "$ROOTFS"/usr/sbin/cereus-installer
-    else
-        install -Dm755 /usr/sbin/cereus-installer "$ROOTFS"/usr/sbin/cereus-installer
-    fi
     # Cleanup and remove useless stuff.
     rm -rf "$ROOTFS"/var/cache/* "$ROOTFS"/run/* "$ROOTFS"/var/run/*
 }
@@ -150,14 +149,17 @@ enable_services() {
     done
 }
 
-copy_include_directory() {
-    find "$INCLUDE_DIRECTORY" -mindepth 1 -maxdepth 1 -exec cp -rfpPv {} "$ROOTFS"/ \;
+copy_include_directories() {
+    for includedir in "${INCLUDE_DIRS[@]}"; do
+            info_msg "=> copying include directory '$includedir' ..."
+	    find "$includedir" -mindepth 1 -maxdepth 1 -exec cp -rfpPv {} "$ROOTFS"/ \;
 
-    # Correct includedir permissions.
-    touch .includedir_list
-    find "${INCLUDE_DIRECTORY}" | sed 's|'"${INCLUDE_DIRECTORY}"'|'"$ROOTFS"'|g' | tee .includedir_list >/dev/null
-    chown root:root $(cat .includedir_list)
-    rm .includedir_list
+	    # Correct includedir permissions.
+	    touch .includedir_list
+	    find "$includedir" | sed 's|'"$includedir"'|'"$ROOTFS"'|g' | tee .includedir_list >/dev/null
+	    chown root:root $(cat .includedir_list)
+	    rm .includedir_list
+    done
 }
 
 generate_initramfs() {
@@ -171,7 +173,7 @@ generate_initramfs() {
 
         # Apply Plymouth theme
         if [ -f "$ROOTFS/etc/plymouth/plymouthd.conf" ]; then
-            chroot "$ROOTFS" plymouth-set-default-theme -R cereus_simply
+            chroot "$ROOTFS" plymouth-set-default-theme cereus_simply
         fi 
 
     mv "$ROOTFS"/boot/initrd "$BOOT_DIR"
@@ -198,6 +200,8 @@ generate_isolinux_boot() {
     cp -f "$SYSLINUX_DATADIR"/vesamenu.c32 "$ISOLINUX_DIR"
     cp -f "$SYSLINUX_DATADIR"/libutil.c32 "$ISOLINUX_DIR"
     cp -f "$SYSLINUX_DATADIR"/chain.c32 "$ISOLINUX_DIR"
+    cp -f "$SYSLINUX_DATADIR"/reboot.c32 "$ISOLINUX_DIR"
+    cp -f "$SYSLINUX_DATADIR"/poweroff.c32 "$ISOLINUX_DIR"
     cp -f isolinux/isolinux.cfg.in "$ISOLINUX_DIR"/isolinux.cfg
     cp -f ${SPLASH_IMAGE} "$ISOLINUX_DIR"
 
@@ -209,6 +213,9 @@ generate_isolinux_boot() {
         -e "s|@@BOOT_TITLE@@|${BOOT_TITLE}|" \
         -e "s|@@BOOT_CMDLINE@@|${BOOT_CMDLINE}|" \
         "$ISOLINUX_DIR"/isolinux.cfg
+
+    # include memtest86+
+    cp -f "$CEREUSHOSTDIR"/boot/memtest.bin "$BOOT_DIR"
 }
 
 generate_grub_efi_boot() {
@@ -261,6 +268,9 @@ generate_grub_efi_boot() {
     umount "$GRUB_EFI_TMPDIR"
     losetup --detach "${LOOP_DEVICE}"
     rm -rf "$GRUB_EFI_TMPDIR"
+
+    # include memtest86+
+    cp -f "$VOIDHOSTDIR"/boot/memtest.efi "$BOOT_DIR"
 }
 
 generate_squashfs() {
@@ -303,7 +313,7 @@ generate_iso_image() {
 #
 # main()
 #
-while getopts "a:b:r:c:C:T:Kk:l:i:I:S:s:o:p:v:h" opt; do
+while getopts "a:b:r:c:C:T:Kk:l:i:I:S:s:o:p:v:Vh" opt; do
     case $opt in
         a) BASE_ARCH="$OPTARG";;
         b) BASE_SYSTEM_PKG="$OPTARG";;
@@ -313,16 +323,17 @@ while getopts "a:b:r:c:C:T:Kk:l:i:I:S:s:o:p:v:h" opt; do
         k) KEYMAP="$OPTARG";;
         l) LOCALE="$OPTARG";;
         i) INITRAMFS_COMPRESSION="$OPTARG";;
-        I) INCLUDE_DIRECTORY="$OPTARG";;
-        S) SERVICE_LIST="$OPTARG";;
+        I) INCLUDE_DIRS+=("$OPTARG");;
+        S) SERVICE_LIST="$SERVICE_LIST $OPTARG";;
         s) SQUASHFS_COMPRESSION="$OPTARG";;
         o) OUTPUT_FILE="$OPTARG";;
-        p) PACKAGE_LIST="$OPTARG";;
+        p) PACKAGE_LIST="$PACKAGE_LIST $OPTARG";;
         C) BOOT_CMDLINE="$OPTARG";;
         T) BOOT_TITLE="$OPTARG";;
         v) LINUX_VERSION="$OPTARG";;
-        h) usage;;
-	*) usage;;
+        V) version; exit 0;;
+        h) usage; exit 0;;
+        *) usage >&2; exit 1;;
     esac
 done
 shift $((OPTIND - 1))
@@ -337,8 +348,6 @@ XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.or
 # Configure dracut to use overlayfs for the writable overlay.
 BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
 
-
-
 # Set defaults
 : ${BASE_ARCH:=$(xbps-uhelper arch 2>/dev/null || uname -m)}
 : ${XBPS_CACHEDIR:="$(pwd -P)"/xbps-cachedir-${BASE_ARCH}}
@@ -349,6 +358,11 @@ BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
 : ${SQUASHFS_COMPRESSION:=xz}
 : ${BASE_SYSTEM_PKG:=base-cereus}
 : ${BOOT_TITLE:="Cereus Linux"}
+
+case $BASE_ARCH in
+    x86_64*|i686*) ;;
+    *) >&2 echo architecture $BASE_ARCH not supported by mklive.sh; exit 1;;
+esac
 
 # Required packages in the image for a working system.
 PACKAGE_LIST="$BASE_SYSTEM_PKG $PACKAGE_LIST"
@@ -370,10 +384,9 @@ CEREUSHOSTDIR="$BUILDDIR/cereus-host"
 BOOT_DIR="$IMAGEDIR/boot"
 ISOLINUX_DIR="$BOOT_DIR/isolinux"
 GRUB_DIR="$BOOT_DIR/grub"
-ISOLINUX_CFG="$ISOLINUX_DIR/isolinux.cfg"
 CURRENT_STEP=0
-STEP_COUNT=9
-[ -n "${INCLUDE_DIRECTORY}" ] && STEP_COUNT=$((STEP_COUNT+1))
+STEP_COUNT=10
+[ "${#INCLUDE_DIRS[@]}" -gt 0 ] && STEP_COUNT=$((STEP_COUNT+1))
 
 : ${SYSLINUX_DATADIR:="$CEREUSHOSTDIR"/usr/lib/syslinux}
 : ${GRUB_DATADIR:="$CEREUSHOSTDIR"/usr/share/grub}
@@ -402,8 +415,13 @@ if [ -n "$LINUX_VERSION" ]; then
 
     _linux_series="$LINUX_VERSION"
     PACKAGE_LIST="$PACKAGE_LIST $LINUX_VERSION"
-else # Otherwise find latest stable version from linux meta-package
-    _linux_series=$(XBPS_ARCH=$BASE_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x linux | grep 'linux[0-9._]\+')
+else # Otherwise find latest stable version from default linux meta-package
+    if [ $BASE_ARCH = "i686" ]; then
+        linux_pkg="linux-legacy-cereus"
+    else
+        linux_pkg="linux-default-cereus"
+    fi
+    _linux_series=$(XBPS_ARCH=$BASE_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x $linux_pkg | grep 'linux[0-9._]\+')
 fi
 
 _kver=$(XBPS_ARCH=$BASE_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -p pkgver ${_linux_series})
@@ -413,7 +431,7 @@ if [ "$?" -ne "0" ]; then
     die "Failed to find kernel package version"
 fi
 
-: ${OUTPUT_FILE="cereus-live-${BASE_ARCH}-${KERNELVERSION}-$(date +%Y.%m%.d).iso"}
+: ${OUTPUT_FILE="cereus-beta-live-${BASE_ARCH}-${KERNELVERSION}-$(date +%Y.%m%.d).iso"}
 
 print_step "Installing software to generate the image: ${REQUIRED_PKGS} ..."
 install_prereqs
@@ -429,9 +447,9 @@ install_packages
 print_step "Enabling services: ${SERVICE_LIST} ..."
 enable_services ${DEFAULT_SERVICE_LIST} ${SERVICE_LIST}
 
-if [ -n "${INCLUDE_DIRECTORY}" ];then
-    print_step "Copying directory structure into the rootfs: ${INCLUDE_DIRECTORY} ..."
-    copy_include_directory
+if [ "${#INCLUDE_DIRS[@]}" -gt 0 ];then
+    print_step "Copying directory structures into the rootfs ..."
+    copy_include_directories
 fi
 
 print_step "Generating initramfs image ($INITRAMFS_COMPRESSION)..."
@@ -454,5 +472,3 @@ generate_iso_image
 
 hsize=$(du -sh "$OUTPUT_FILE"|awk '{print $1}')
 info_msg "Created $(readlink -f "$OUTPUT_FILE") ($hsize) successfully."
-
-

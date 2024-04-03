@@ -2,11 +2,12 @@
 # -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 
-type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
+if ! type getarg >/dev/null 2>&1 && ! type getargbool >/dev/null 2>&1; then
+    . /lib/dracut-lib.sh
+fi
 
 echo cereus-live > ${NEWROOT}/etc/hostname
 
-AUTOLOGIN=$(getarg live.autologin)
 USERNAME=$(getarg live.user)
 USERSHELL=$(getarg live.shell)
 
@@ -22,7 +23,7 @@ if ! grep -q ${USERSHELL} ${NEWROOT}/etc/shells ; then
     echo ${USERSHELL} >> ${NEWROOT}/etc/shells
 fi
 
-# Create new user and remove password.
+# Create new user and remove password. We'll use autologin by default.
 chroot ${NEWROOT} useradd -m -c $USERNAME -G audio,video,wheel -s $USERSHELL $USERNAME
 
 # If emptty is installed create also nopasswdlogin group
@@ -64,7 +65,7 @@ _EOF
     chroot ${NEWROOT} chown polkitd:polkitd /etc/polkit-1/rules.d/cereus-live.rules
 fi
 
-if [ -n "$AUTOLOGIN" ]; then
+if getargbool 0 live.autologin; then
         sed -i "s,GETTY_ARGS=\"--noclear\",GETTY_ARGS=\"--noclear -a $USERNAME\",g" ${NEWROOT}/etc/sv/agetty-tty1/conf
 fi
 

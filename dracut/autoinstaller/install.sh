@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+type getargbool >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 # These functions pulled from void's excellent mklive.sh
 VAI_info_msg() {
@@ -75,8 +75,8 @@ VAI_install_base_system() {
 VAI_prepare_chroot() {
     # Mount dev, bind, proc, etc into chroot
     mount -t proc proc "${target}/proc"
-    mount -t sysfs sys "${target}/sys"
-    mount -o rbind /dev "${target}/dev"
+    mount --rbind /sys "${target}/sys"
+    mount --rbind /dev "${target}/dev"
 }
 
 VAI_configure_sudo() {
@@ -212,10 +212,13 @@ VAI_configure_autoinstall() {
     esac
 
     # --------------- Pull config URL out of kernel cmdline -------------------------
+    set +e
     if getargbool 0 autourl ; then
+        set -e
         xbps-uhelper fetch "$(getarg autourl)>/etc/autoinstall.cfg"
 
     else
+        set -e
         mv /etc/autoinstall.default /etc/autoinstall.cfg
     fi
 
@@ -289,8 +292,9 @@ VAI_main() {
 
 # If we are using the autoinstaller, launch it
 if getargbool 0 auto  ; then
+    set -e
     VAI_main
+    # Very important to release this before returning to dracut code
+    set +e
 fi
 
-# Very important to release this before returning to dracut code
-set +e

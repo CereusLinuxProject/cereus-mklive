@@ -36,10 +36,12 @@ USERLOGIN_DONE=
 USERPASSWORD_DONE=
 USERNAME_DONE=
 USERGROUPS_DONE=
+USERACCOUNT_DONE=
 BOOTLOADER_DONE=
 PARTITIONS_DONE=
 NETWORK_DONE=
 FILESYSTEMS_DONE=
+MIRROR_DONE=
 
 TARGETDIR=/mnt/target
 LOG=/dev/tty8
@@ -358,6 +360,15 @@ show_disks() {
     done
 }
 
+get_partfs() {
+    # Get fs type from configuration if available. This ensures
+    # that the user is shown the proper fs type if they install the system.
+    local part="$1"
+    local default="${2:-none}"
+    local fstype=$(grep "MOUNTPOINT ${part}" "$CONF_FILE"|awk '{print $3}')
+    echo "${fstype:-$default}"
+}
+
 show_partitions() {
     local dev fstype fssize p part
 
@@ -375,7 +386,7 @@ show_partitions() {
                 [ "$fstype" = "LVM2_member" ] && continue
                 fssize=$(lsblk -nr /dev/$part|awk '{print $4}'|head -1)
                 echo "/dev/$part"
-                echo "size:${fssize:-unknown};fstype:${fstype:-none}"
+                echo "size:${fssize:-unknown};fstype:$(get_partfs "/dev/$part")"
             fi
         done
     done
@@ -389,7 +400,7 @@ show_partitions() {
         fstype=$(lsblk -nfr $p|awk '{print $2}'|head -1)
         fssize=$(lsblk -nr $p|awk '{print $4}'|head -1)
         echo "${p}"
-        echo "size:${fssize:-unknown};fstype:${fstype:-none}"
+        echo "size:${fssize:-unknown};fstype:$(get_partfs "$p")"
     done
     # Software raid (md)
     for p in $(ls -d /dev/md* 2>/dev/null|grep '[0-9]'); do
@@ -400,7 +411,7 @@ show_partitions() {
             [ "$fstype" = "LVM2_member" ] && continue
             fssize=$(lsblk -nr /dev/$part|awk '{print $4}')
             echo "$p"
-            echo "size:${fssize:-unknown};fstype:${fstype:-none}"
+            echo "size:${fssize:-unknown};fstype:$(get_partfs "$p")"
         fi
     done
     # cciss(4) devices
@@ -410,13 +421,13 @@ show_partitions() {
         [ "$fstype" = "LVM2_member" ] && continue
         fssize=$(lsblk -nr /dev/cciss/$part|awk '{print $4}')
         echo "/dev/cciss/$part"
-        echo "size:${fssize:-unknown};fstype:${fstype:-none}"
+        echo "size:${fssize:-unknown};fstype:$(get_partfs "/dev/cciss/$part")"
     done
     if [ -e /sbin/lvs ]; then
         # LVM
         lvs --noheadings|while read lvname vgname perms size; do
             echo "/dev/mapper/${vgname}-${lvname}"
-            echo "size:${size};fstype:lvm"
+            echo "size:${size};fstype:$(get_partfs "/dev/mapper/${vgname}-${lvname}" lvm)"
         done
     fi
 }
@@ -477,6 +488,7 @@ menu_filesystems() {
             echo "MOUNTPOINT $dev $1 $2 $3 $4" >>$CONF_FILE
         fi
     done
+    FILESYSTEMS_DONE=1
 }
 
 menu_partitions() {
@@ -575,7 +587,8 @@ menu_locale() {
 
 set_locale() {
     if [ -f $TARGETDIR/etc/default/libc-locales ]; then
-        local LOCALE=$(get_option LOCALE)
+        local LOCALE="$(get_option LOCALE)"
+        : "${LOCALE:=C.UTF-8}"
         sed -i -e "s|LANG=.*|LANG=$LOCALE|g" $TARGETDIR/etc/locale.conf
         # Uncomment locale from /etc/default/libc-locales and regenerate it.
         sed -e "/${LOCALE}/s/^\#//" -i $TARGETDIR/etc/default/libc-locales
@@ -623,7 +636,8 @@ menu_hostname() {
 }
 
 set_hostname() {
-    echo $(get_option HOSTNAME) > $TARGETDIR/etc/hostname
+    local hostname="$(get_option HOSTNAME)"
+    echo "${hostname:-void}" > $TARGETDIR/etc/hostname
 }
 
 menu_rootpassword() {
@@ -659,7 +673,7 @@ menu_rootpassword() {
 }
 
 set_rootpassword() {
-    echo "root:$(get_option ROOTPASSWORD)" | chpasswd -R $TARGETDIR -c SHA512
+    echo "root:$(get_option ROOTPASSWORD)" | chroot $TARGETDIR chpasswd -c SHA512
 }
 
 menu_useraccount() {
@@ -691,7 +705,7 @@ menu_useraccount() {
     while true; do
         _preset=$(get_option USERNAME)
         [ -z "$_preset" ] && _preset="Cereus User"
-        DIALOG --inputbox "Enter a user name for login '$(get_option USERLOGIN)' :" \
+        DIALOG --inputbox "Enter a display name for login '$(get_option USERLOGIN)' :" \
             ${INPUTSIZE} "$_preset"
         if [ $? -eq 0 ]; then
             set_option USERNAME "$(cat $ANSWER)"
@@ -742,6 +756,10 @@ menu_useraccount() {
             else
                 _status=on
             fi
+            # ignore the groups of root, existing users, and package groups
+            if [[ "${_gid}" -ge 1000 || "${_group}" = "_"* || "${_group}" = "root" ]]; then
+                continue
+            fi
             if [ -z "${_checklist}" ]; then
                 _checklist="${_group} ${_group}:${_gid} ${_status}"
             else
@@ -760,14 +778,11 @@ menu_useraccount() {
 }
 
 set_useraccount() {
-    [ -z "$USERLOGIN_DONE" ] && return
-    [ -z "$USERPASSWORD_DONE" ] && return
-    [ -z "$USERNAME_DONE" ] && return
-    [ -z "$USERGROUPS_DONE" ] && return
-    useradd -R $TARGETDIR -m -G $(get_option USERGROUPS) \
-        -c "$(get_option USERNAME)" $(get_option USERLOGIN)
+    [ -z "$USERACCOUNT_DONE" ] && return
+    chroot $TARGETDIR useradd -m -G "$(get_option USERGROUPS)" \
+        -c "$(get_option USERNAME)" "$(get_option USERLOGIN)"
     echo "$(get_option USERLOGIN):$(get_option USERPASSWORD)" | \
-        chpasswd -R $TARGETDIR -c SHA512
+        chroot $TARGETDIR chpasswd -c SHA512
 }
 
 menu_bootloader() {
@@ -809,33 +824,39 @@ set_bootloader() {
     chroot $TARGETDIR grub-install $grub_args $dev >$LOG 2>&1
     if [ $? -ne 0 ]; then
         DIALOG --msgbox "${BOLD}${RED}ERROR:${RESET} \
-        failed to install GRUB to $dev!\nCheck $LOG for errors." ${MSGBOXSIZE}
+failed to install GRUB to $dev!\nCheck $LOG for errors." ${MSGBOXSIZE}
         DIE 1
     fi
     echo "Running grub-mkconfig on $TARGETDIR..." >$LOG
     chroot $TARGETDIR grub-mkconfig -o /boot/grub/grub.cfg >$LOG 2>&1
     if [ $? -ne 0 ]; then
         DIALOG --msgbox "${BOLD}${RED}ERROR${RESET}: \
-        failed to run grub-mkconfig!\nCheck $LOG for errors." ${MSGBOXSIZE}
+failed to run grub-mkconfig!\nCheck $LOG for errors." ${MSGBOXSIZE}
         DIE 1
     fi
 }
 
 test_network() {
+    # Reset the global variable to ensure that network is accessible for this test.
+    NETWORK_DONE=
+
     rm -f otime && \
         xbps-uhelper fetch https://repo-default.voidlinux.org/current/otime >$LOG 2>&1
-    if [ $? -eq 0 ]; then
+    local status=$?
+    rm -f otime
+
+    if [ "$status" -eq 0 ]; then
         DIALOG --msgbox "Network is working properly!" ${MSGBOXSIZE}
         NETWORK_DONE=1
         return 1
     fi
-   if [ "$1" = "nm" ]; then
+    if [ "$1" = "nm" ]; then
         DIALOG --msgbox "Network Manager is enabled but network is inaccessible, please set it up externally with nmcli, nmtui, or the Network Manager tray applet." ${MSGBOXSIZE}
     else
         DIALOG --msgbox "Network is inaccessible, please set it up properly." ${MSGBOXSIZE}
     fi
 
-       if [ "$1" = "connman" ]; then
+    if [ "$1" = "connman" ]; then
         DIALOG --msgbox "Connman is enabled but network is inaccessible, please set it up externally with connmanctl, connman-ncurses, connman-gtk, or connman-ui tray applet." ${MSGBOXSIZE}
     else
         DIALOG --msgbox "Network is inaccessible, please set it up properly." ${MSGBOXSIZE}
@@ -862,15 +883,13 @@ configure_wifi() {
         DIALOG --msgbox "Invalid AP password." ${MSGBOXSIZE}
     fi
 
-    # Reset the configuration to the default, if necessary.
-    # Otherwise backup the configuration.
-
+    # reset the configuration to the default, if necessary
+    # otherwise backup the configuration
     if [ -f ${_wpasupconf}.orig ]; then
         cp -f ${_wpasupconf}.orig ${_wpasupconf}
     else
         cp -f ${_wpasupconf} ${_wpasupconf}.orig
     fi
-
     if [ "$enc" = "wep" ]; then
         cat << EOF >> ${_wpasupconf}
 network={
@@ -996,6 +1015,17 @@ menu_network() {
     fi
 }
 
+validate_useraccount() {
+    # don't check that USERNAME has been set because it can be empty
+    local USERLOGIN=$(get_option USERLOGIN)
+    local USERPASSWORD=$(get_option USERPASSWORD)
+    local USERGROUPS=$(get_option USERGROUPS)
+
+    if [ -n "$USERLOGIN" ] && [ -n "$USERPASSWORD" ] && [ -n "$USERGROUPS" ]; then
+        USERACCOUNT_DONE=1
+    fi
+}
+
 validate_filesystems() {
     local mnts dev size fstype mntpt mkfs rootfound fmt
     local usrfound efi_system_partition
@@ -1045,7 +1075,7 @@ as FAT32, mountpoint /boot/efi and at least with 100MB of size." ${MSGBOXSIZE}
 create_filesystems() {
     local mnts dev mntpt fstype fspassno mkfs size rv uuid
 
-    mnts=$(grep -E '^MOUNTPOINT.*' $CONF_FILE)
+    mnts=$(grep -E '^MOUNTPOINT.*' $CONF_FILE | sort -k 5)
     set -- ${mnts}
     while [ $# -ne 0 ]; do
         dev=$2; fstype=$3; mntpt="$5"; mkfs=$6
@@ -1115,7 +1145,7 @@ failed to mount $dev on ${mntpt}! check $LOG for errors." ${MSGBOXSIZE}
     done
 
     # mount all filesystems in target rootfs
-    mnts=$(grep -E '^MOUNTPOINT.*' $CONF_FILE)
+    mnts=$(grep -E '^MOUNTPOINT.*' $CONF_FILE | sort -k 5)
     set -- ${mnts}
     while [ $# -ne 0 ]; do
         dev=$2; fstype=$3; mntpt="$5"
@@ -1149,29 +1179,19 @@ mount_filesystems() {
 }
 
 umount_filesystems() {
-    local f
-
-    for f in sys/fs/fuse/connections sys proc dev sys/firmware/efi/efivars; do
-        echo "Unmounting $TARGETDIR/$f..." >$LOG
-        umount $TARGETDIR/$f >$LOG 2>&1
-    done
-    local mnts="$(grep -E '^MOUNTPOINT.*$' $CONF_FILE)"
+    local mnts="$(grep -E '^MOUNTPOINT.*swap.*$' $CONF_FILE | sort -r -k 5)"
     set -- ${mnts}
     while [ $# -ne 0 ]; do
-        local dev=$2; local fstype=$3; local mntpt=$5
+        local dev=$2; local fstype=$3
         shift 6
         if [ "$fstype" = "swap" ]; then
             echo "Disabling swap space on $dev..." >$LOG
             swapoff $dev >$LOG 2>&1
             continue
         fi
-        if [ "$mntpt" != "/" ]; then
-            echo "Unmounting $TARGETDIR/$mntpt..." >$LOG
-            umount $TARGETDIR/$mntpt >$LOG 2>&1
-        fi
     done
     echo "Unmounting $TARGETDIR..." >$LOG
-    umount $TARGETDIR >$LOG 2>&1
+    umount -R $TARGETDIR >$LOG 2>&1
 }
 
 log_and_count() {
@@ -1225,6 +1245,10 @@ install_packages() {
     mkdir -p $TARGETDIR/var/db/xbps/keys $TARGETDIR/usr/share
     cp -a /usr/share/xbps.d $TARGETDIR/usr/share/
     cp /var/db/xbps/keys/*.plist $TARGETDIR/var/db/xbps/keys
+    if [ -n "$MIRROR_DONE" ]; then
+        mkdir -p $TARGETDIR/etc
+        cp -a /etc/xbps.d $TARGETDIR/etc
+    fi
     mkdir -p $TARGETDIR/boot/grub
 
     _arch=$(xbps-uhelper arch)
@@ -1240,8 +1264,8 @@ install_packages() {
     chroot $TARGETDIR xbps-reconfigure -a
 }
 
-enable_dhcpd() {
-    ln -sf /etc/sv/dhcpcd $TARGETDIR/etc/runit/runsvdir/default/dhcpcd
+enable_service() {
+    ln -sf /etc/sv/$1 $TARGETDIR/etc/runit/runsvdir/default/$1
 }
 
 menu_install() {
@@ -1268,6 +1292,16 @@ please do so before starting the installation.${RESET}" ${MSGBOXSIZE}
         return 1
     fi
 
+    # Validate useraccount. All parameters must be set (name, password, login name, groups).
+    validate_useraccount
+
+    if [ -z "$USERACCOUNT_DONE" ]; then
+        DIALOG --yesno "${BOLD}The user account is not set up properly.${RESET}\n\n
+${BOLD}${RED}WARNING: no user will be created. You will only be able to login \
+with the root user in your new system.${RESET}\n\n
+${BOLD}Do you want to continue?${RESET}" 10 60 || return
+    fi
+
     DIALOG --yesno "${BOLD}The following operations will be executed:${RESET}\n\n
 ${BOLD}${TARGETFS}${RESET}\n
 ${BOLD}${RED}WARNING: data on partitions will be COMPLETELY DESTROYED for new \
@@ -1278,6 +1312,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
     # Create and mount filesystems
     create_filesystems
 
+    SOURCE_DONE="$(get_option SOURCE)"
     # If source not set use defaults.
     if [ "$(get_option SOURCE)" = "local" -o -z "$SOURCE_DONE" ]; then
         copy_rootfs
@@ -1291,6 +1326,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         echo "Removing $USERNAME live user from targetdir ..." >$LOG
         chroot $TARGETDIR userdel -r $USERNAME >$LOG 2>&1
         rm -f $TARGETDIR/etc/sudoers.d/99-cereus-live
+        sed -i "s,GETTY_ARGS=\"--noclear -a $USERNAME\",GETTY_ARGS=\"--noclear\",g" $TARGETDIR/etc/sv/agetty-tty1/conf
         TITLE="Check $LOG for details ..."
         INFOBOX "Rebuilding initramfs for target ..." 4 60
         echo "Rebuilding initramfs for target ..." >$LOG
@@ -1299,7 +1335,15 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
         chroot $TARGETDIR dracut --no-hostonly --add-drivers "ahci" --force >>$LOG 2>&1
         INFOBOX "Removing temporary packages from target ..." 4 60
         echo "Removing temporary packages from target ..." >$LOG
-        xbps-remove -r $TARGETDIR -Ry dialog xtools-minimal >>$LOG 2>&1
+        TO_REMOVE="xtools-minimal"
+        # only remove espeakup and brltty if it wasn't enabled in the live environment
+        if ! [ -e "/var/service/espeakup" ]; then
+            TO_REMOVE+=" espeakup"
+        fi
+        if ! [ -e "/var/service/brltty" ]; then
+            TO_REMOVE+=" brltty"
+        fi
+        xbps-remove -r $TARGETDIR -Ry $TO_REMOVE >>$LOG 2>&1
         
         # Remove Calamares
         if [ -f $TARGETDIR/usr/bin/calamares ]; then
@@ -1314,7 +1358,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
            
         # Enable plymouth
         if [ -f $TARGETDIR/etc/plymouth/plymouthd.conf ]; then
-            chroot $TARGETDIR plymouth-set-default-theme -R cereus_simply >>$LOG 2>&1
+            chroot $TARGETDIR plymouth-set-default-theme cereus_simply >>$LOG 2>&1
         fi 
 
         # LightDM tweaks
@@ -1386,6 +1430,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
     # Copy /etc/skel files for root.
     cp $TARGETDIR/etc/skel/.[bix]* $TARGETDIR/root
 
+    NETWORK_DONE="$(get_option NETWORK)"
     # network settings for target
     if [ -n "$NETWORK_DONE" ]; then
         local net="$(get_option NETWORK)"
@@ -1399,7 +1444,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
                 cp /etc/wpa_supplicant/wpa_supplicant.conf $TARGETDIR/etc/wpa_supplicant
                 ln -sf /etc/sv/wpa_supplicant $TARGETDIR/etc/runit/runsvdir/default/wpa_supplicant
             fi
-            enable_dhcpd
+            enable_service dhcpcd
         elif [ -n "$_dev" -a "$_type" = "static" ]; then
             # static IP through dhcpcd.
             mv $TARGETDIR/etc/dhcpcd.conf $TARGETDIR/etc/dhcpcd.conf.orig
@@ -1409,7 +1454,7 @@ ${BOLD}Do you want to continue?${RESET}" 20 80 || return
             echo "static ip_address=$_ip" >>$TARGETDIR/etc/dhcpcd.conf
             echo "static routers=$_gw" >>$TARGETDIR/etc/dhcpcd.conf
             echo "static domain_name_servers=$_dns1 $_dns2" >>$TARGETDIR/etc/dhcpcd.conf
-            enable_dhcpd
+            enable_service dhcpcd
         fi
     fi
 
@@ -1479,12 +1524,18 @@ menu_source() {
         "Local") src="local";;
         "Network") src="net";
             if [ -z "$NETWORK_DONE" ]; then
-                menu_network;
+                if test_network; then
+                    menu_network
+                fi
             fi;;
         *) return 1;;
     esac
     SOURCE_DONE=1
     set_option SOURCE $src
+}
+
+menu_mirror() {
+    xrankmirrors -i && MIRROR_DONE=1
 }
 
 menu() {
@@ -1502,6 +1553,7 @@ menu() {
             "Keyboard" "Set system keyboard" \
             "Network" "Set up the network" \
             "Source" "Set source installation" \
+            "Mirror" "Select XBPS mirror" \
             "Hostname" "Set system hostname" \
             "Timezone" "Set system time zone" \
             "RootPassword" "Set system root password" \
@@ -1520,6 +1572,7 @@ menu() {
             "Keyboard" "Set system keyboard" \
             "Network" "Set up the network" \
             "Source" "Set source installation" \
+            "Mirror" "Select XBPS mirror" \
             "Hostname" "Set system hostname" \
             "Locale" "Set system locale" \
             "Timezone" "Set system time zone" \
@@ -1536,6 +1589,7 @@ menu() {
         # Show settings
         cp $CONF_FILE /tmp/conf_hidden.$$;
         sed -i "s/^ROOTPASSWORD.*/ROOTPASSWORD <-hidden->/" /tmp/conf_hidden.$$
+        sed -i "s/^USERPASSWORD.*/USERPASSWORD <-hidden->/" /tmp/conf_hidden.$$
         DIALOG --title "Saved settings for installation" --textbox /tmp/conf_hidden.$$ 14 60
         rm /tmp/conf_hidden.$$
         return
@@ -1544,12 +1598,13 @@ menu() {
     case $(cat $ANSWER) in
         "Keyboard") menu_keymap && [ -n "$KEYBOARD_DONE" ] && DEFITEM="Network";;
         "Network") menu_network && [ -n "$NETWORK_DONE" ] && DEFITEM="Source";;
-        "Source") menu_source && [ -n "$SOURCE_DONE" ] && DEFITEM="Hostname";;
+        "Source") menu_source && [ -n "$SOURCE_DONE" ] && DEFITEM="Mirror";;
+        "Mirror") menu_mirror && [ -n "$MIRROR_DONE" ] && DEFITEM="Hostname";;
         "Hostname") menu_hostname && [ -n "$HOSTNAME_DONE" ] && DEFITEM="$AFTER_HOSTNAME";;
         "Locale") menu_locale && [ -n "$LOCALE_DONE" ] && DEFITEM="Timezone";;
         "Timezone") menu_timezone && [ -n "$TIMEZONE_DONE" ] && DEFITEM="RootPassword";;
         "RootPassword") menu_rootpassword && [ -n "$ROOTPASSWORD_DONE" ] && DEFITEM="UserAccount";;
-        "UserAccount") menu_useraccount && [ -n "$USERNAME_DONE" ] && [ -n "$USERPASSWORD_DONE" ] \
+        "UserAccount") menu_useraccount && [ -n "$USERLOGIN_DONE" ] && [ -n "$USERPASSWORD_DONE" ] \
                && DEFITEM="BootLoader";;
         "BootLoader") menu_bootloader && [ -n "$BOOTLOADER_DONE" ] && DEFITEM="Partition";;
         "Partition") menu_partitions && [ -n "$PARTITIONS_DONE" ] && DEFITEM="Filesystems";;
@@ -1578,7 +1633,7 @@ Welcome to the Cereus Linux installation. A simple and minimal \
 Linux distribution based on Void Linux with the purpose to provide \
 an user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
-please create any issue at ${BOLD}https://github.com/cereuslinuxproject/cereus-mklive${RESET}.\n\n
+please create an issue at ${BOLD}https://github.com/cereuslinuxproject/cereus-mklive${RESET}.\n\n
 Also, we recommend to read the official Void documentation: ${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
 
 while true; do
