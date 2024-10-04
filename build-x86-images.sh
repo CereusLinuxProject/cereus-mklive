@@ -93,7 +93,8 @@ build_variant() {
     SERVICES="sshd chronyd"
 
 # Declare base repositories url
-    VOID_REPO="https://repo-default.voidlinux.org/current"
+    #VOID_REPO="https://repo-default.voidlinux.org/current"
+    VOID_REPO="https://mirrors.servercentral.com/voidlinux/current"
     CEREUS_REPO="https://sourceforge.net/projects/cereus-linux/files/repos"
     REPO_EXTRA="${CEREUS_REPO}/cereus-extra/${ARCH}"
     REPO_CORE="${CEREUS_REPO}/cereus-core/${ARCH}"
@@ -102,7 +103,7 @@ build_variant() {
     THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan cereus-neofetch htop nano void-repo-nonfree accountsservice gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip falkon qt5ct"
+    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan fastfetch htop nano void-repo-nonfree accountsservice gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip otter-browser qt5ct cups cups-browsed"
 
     # Add kernel headers in order to DKMS work properly
     if [ "${ARCH}" = "i686" ]; then
@@ -147,7 +148,7 @@ esac
             SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg sddm"
         ;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets CopyQ strawberry galculator-gtk3 qpdfview FeatherPad blesh"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad blesh"
             SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg lightdm"
             LIGHTDM_SESSION=lxqt
         ;;

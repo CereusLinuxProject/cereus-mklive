@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #-
-trap 'error_out $? $LINENO' INT TERM 0
 umask 022
 
 . ./lib.sh
@@ -52,14 +51,18 @@ mount_pseudofs() {
     done
 }
 umount_pseudofs() {
-    umount -R -f "$ROOTFS"/sys >/dev/null 2>&1
-    umount -R -f "$ROOTFS"/dev >/dev/null 2>&1
-    umount -R -f "$ROOTFS"/proc >/dev/null 2>&1
+	for f in sys dev proc; do
+		if [ -d "$ROOTFS/$f" ] && ! umount -R -f "$ROOTFS/$f"; then
+			info_msg "ERROR: failed to unmount $ROOTFS/$f/"
+			return 1
+		fi
+	done
 }
 error_out() {
-    umount_pseudofs
-    [ -d "$BUILDDIR" -a -z "$KEEP_BUILDDIR" ] && rm -rf "$BUILDDIR"
-    exit "${1:=0}"
+	trap - INT TERM 0
+    umount_pseudofs || exit "${1:-0}"
+    [ -d "$BUILDDIR" ] && [ -z "$KEEP_BUILDDIR" ] && rm -rf --one-file-system "$BUILDDIR"
+    exit "${1:-0}"
 }
 
 usage() {
@@ -83,6 +86,7 @@ usage() {
 	 -s <gzip|lzo|xz>   Compression type for the squashfs image (default: xz)
 	 -o <file>          Output file name for the ISO image (default: automatic)
 	 -p "<pkg> ..."     Install additional packages in the ISO image
+	 -g "<pkg> ..."     Ignore packages when building the ISO image
 	 -I <includedir>    Include directory structure under given path in the ROOTFS
 	 -S "<service> ..." Enable services in the ISO image
 	 -C "<arg> ..."     Add additional kernel command line arguments
@@ -137,6 +141,13 @@ install_packages() {
 
     # Cleanup and remove useless stuff.
     rm -rf "$ROOTFS"/var/cache/* "$ROOTFS"/run/* "$ROOTFS"/var/run/*
+}
+
+ignore_packages() {
+	mkdir -p "$ROOTFS"/etc/xbps.d
+	for pkg in $IGNORE_PKGS; do
+		echo "ignorepkg=$pkg" >> "$ROOTFS"/etc/xbps.d/mklive-ignore.conf
+	done
 }
 
 enable_services() {
@@ -274,7 +285,7 @@ generate_grub_efi_boot() {
 }
 
 generate_squashfs() {
-    umount_pseudofs
+    umount_pseudofs || exit 1
 
     # Find out required size for the rootfs and create an ext3fs image off it.
     ROOTFS_SIZE=$(du --apparent-size -sm "$ROOTFS"|awk '{print $1}')
@@ -313,28 +324,29 @@ generate_iso_image() {
 #
 # main()
 #
-while getopts "a:b:r:c:C:T:Kk:l:i:I:S:s:o:p:v:Vh" opt; do
-    case $opt in
-        a) BASE_ARCH="$OPTARG";;
-        b) BASE_SYSTEM_PKG="$OPTARG";;
-        r) XBPS_REPOSITORY="--repository=$OPTARG $XBPS_REPOSITORY";;
-        c) XBPS_CACHEDIR="$OPTARG";;
-        K) readonly KEEP_BUILDDIR=1;;
-        k) KEYMAP="$OPTARG";;
-        l) LOCALE="$OPTARG";;
-        i) INITRAMFS_COMPRESSION="$OPTARG";;
-        I) INCLUDE_DIRS+=("$OPTARG");;
-        S) SERVICE_LIST="$SERVICE_LIST $OPTARG";;
-        s) SQUASHFS_COMPRESSION="$OPTARG";;
-        o) OUTPUT_FILE="$OPTARG";;
-        p) PACKAGE_LIST="$PACKAGE_LIST $OPTARG";;
-        C) BOOT_CMDLINE="$OPTARG";;
-        T) BOOT_TITLE="$OPTARG";;
-        v) LINUX_VERSION="$OPTARG";;
-        V) version; exit 0;;
-        h) usage; exit 0;;
-        *) usage >&2; exit 1;;
-    esac
+while getopts "a:b:r:c:C:T:Kk:l:i:I:S:s:o:p:g:v:Vh" opt; do
+	case $opt in
+		a) BASE_ARCH="$OPTARG";;
+		b) BASE_SYSTEM_PKG="$OPTARG";;
+		r) XBPS_REPOSITORY="--repository=$OPTARG $XBPS_REPOSITORY";;
+		c) XBPS_CACHEDIR="$OPTARG";;
+		g) IGNORE_PKGS="$IGNORE_PKGS $OPTARG" ;;
+		K) readonly KEEP_BUILDDIR=1;;
+		k) KEYMAP="$OPTARG";;
+		l) LOCALE="$OPTARG";;
+		i) INITRAMFS_COMPRESSION="$OPTARG";;
+		I) INCLUDE_DIRS+=("$OPTARG");;
+		S) SERVICE_LIST="$SERVICE_LIST $OPTARG";;
+		s) SQUASHFS_COMPRESSION="$OPTARG";;
+		o) OUTPUT_FILE="$OPTARG";;
+		p) PACKAGE_LIST="$PACKAGE_LIST $OPTARG";;
+		C) BOOT_CMDLINE="$OPTARG";;
+		T) BOOT_TITLE="$OPTARG";;
+		v) LINUX_VERSION="$OPTARG";;
+		V) version; exit 0;;
+		h) usage; exit 0;;
+		*) usage >&2; exit 1;;
+	esac
 done
 shift $((OPTIND - 1))
 
@@ -347,6 +359,8 @@ XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.or
 
 # Configure dracut to use overlayfs for the writable overlay.
 BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
+
+ARCH=$(xbps-uhelper arch)
 
 # Set defaults
 : ${BASE_ARCH:=$(xbps-uhelper arch 2>/dev/null || uname -m)}
@@ -372,6 +386,8 @@ if [ "$(id -u)" -ne 0 ]; then
     die "Must be run as root, exiting..."
 fi
 
+trap 'error_out $? $LINENO' INT TERM 0
+
 if [ -n "$ROOTDIR" ]; then
     BUILDDIR=$(mktemp --tmpdir="$ROOTDIR" -d)
 else
@@ -387,6 +403,7 @@ GRUB_DIR="$BOOT_DIR/grub"
 CURRENT_STEP=0
 STEP_COUNT=10
 [ "${#INCLUDE_DIRS[@]}" -gt 0 ] && STEP_COUNT=$((STEP_COUNT+1))
+[ -n "${IGNORE_PKGS}" ] && STEP_COUNT=$((STEP_COUNT+1))
 
 : ${SYSLINUX_DATADIR:="$CEREUSHOSTDIR"/usr/lib/syslinux}
 : ${GRUB_DATADIR:="$CEREUSHOSTDIR"/usr/share/grub}
@@ -415,7 +432,7 @@ if [ -n "$LINUX_VERSION" ]; then
 
     _linux_series="$LINUX_VERSION"
     PACKAGE_LIST="$PACKAGE_LIST $LINUX_VERSION"
-else # Otherwise find latest stable version from default linux meta-package
+else # Otherwise find latest stable version from corresponding default linux meta-package
     if [ $BASE_ARCH = "i686" ]; then
         linux_pkg="linux-legacy-cereus"
     else
@@ -440,7 +457,12 @@ mkdir -p "$ROOTFS"/etc
 [ -s data/motd ] && cp data/motd "$ROOTFS"/etc
 [ -s data/issue ] && cp data/issue "$ROOTFS"/etc
 
-print_step "Installing Cereus pkgs into the rootfs: ${PACKAGE_LIST} ..."
+if [ -n "$IGNORE_PKGS" ]; then
+	print_step "Ignoring packages in the rootfs: ${IGNORE_PKGS} ..."
+	ignore_packages
+fi
+
+print_step "Installing cereus pkgs into the rootfs: ${PACKAGE_LIST} ..."
 install_packages
 
 : ${DEFAULT_SERVICE_LIST:=agetty-tty1 agetty-tty2 agetty-tty3 agetty-tty4 agetty-tty5 agetty-tty6 udevd}

@@ -10,4 +10,7 @@ stamps*
 !dracut/*/*.sh
 !packer/scripts/*.sh
 cereus-live-*/
+distdir-*/
 release/
+packer/cloud-*/
+packer/vagrant-*/

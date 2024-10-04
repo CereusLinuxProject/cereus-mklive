@@ -63,9 +63,9 @@ usage() {
 
 	OPTIONS
 	 -b <fstype>    /boot filesystem type (default: vfat)
-	 -B <bsize>     /boot filesystem size (default: 64MiB)
+	 -B <bsize>     /boot filesystem size (default: 256MiB)
 	 -r <fstype>    / filesystem type (default: ext4)
-	 -s <totalsize> Total image size (default: 2GiB)
+	 -s <totalsize> Total image size (default: 768MiB)
 	 -o <output>    Image filename (default: guessed automatically)
 	 -x <num>       Number of threads to use for image compression (default: dynamic)
 	 -h             Show this help and exit
@@ -116,24 +116,24 @@ PLATFORM="${PLATFORM%-PLATFORMFS*}"
 
 # Be absolutely certain the platform is supported before continuing
 case "$PLATFORM" in
-    rpi-armv6l|rpi-armv7l|rpi-aarch64|GCP|pinebookpro|pinephone|rock64|*-musl);;
+    rpi-armv6l|rpi-armv7l|rpi-aarch64|GCP|pinebookpro|pinephone|rock64|rockpro64|*-musl);;
     *) die "The $PLATFORM is not supported, exiting..."
 esac
 
 # Default for bigger boot partion on rk33xx devices since it needs to
 # fit at least 2 Kernels + initramfs
 case "$PLATFORM" in
-    pinebookpro*|rock64*)
-        : "${BOOT_FSSIZE:=256MiB}"
+    pinebookpro*|rock64*|rockpro64*)
+        : "${BOOT_FSSIZE:=512MiB}"
         ;;
 esac
-# By default we build all platform images with a 64MiB boot partition
-# formated FAT16, and an approximately 1.9GiB root partition formated
+# By default we build all platform images with a 256MiB boot partition
+# formated FAT16, and an approximately 512MiB root partition formatted
 # ext4.  More exotic combinations are of course possible, but this
 # combination works on all known platforms.
-: "${IMGSIZE:=2G}"
+: "${IMGSIZE:=768M}"
 : "${BOOT_FSTYPE:=vfat}"
-: "${BOOT_FSSIZE:=64MiB}"
+: "${BOOT_FSSIZE:=256MiB}"
 : "${ROOT_FSTYPE:=ext4}"
 
 # Verify that the required tooling is available
@@ -172,11 +172,11 @@ if [ "$BOOT_FSTYPE" = "vfat" ]; then
 fi
 
 # These platforms use a partition layout with a small boot
-# partition (64M by default) and the rest of the space as the
+# partition (256M by default) and the rest of the space as the
 # root filesystem.  This is the generally preferred disk
 # layout for new platforms.
 case "$PLATFORM" in
-	pinebookpro*|rock64*)
+	pinebookpro*|rock64*|rockpro64*)
 		# rk33xx devices use GPT and need more space reserved
 		sfdisk "$FILENAME" <<_EOF
 label: gpt
@@ -245,6 +245,10 @@ fi
 # ensure ssh login is possible for headless setups.
 sed -i "${ROOTFS}/etc/ssh/sshd_config" -e 's|^#\(PermitRootLogin\) .*|\1 yes|g'
 
+# Grow rootfs to fill the media on boot
+run_cmd_target "xbps-install -Syr $ROOTFS cloud-guest-utils"
+sed -i "${ROOTFS}/etc/default/growpart" -e 's/#ENABLE/ENABLE/'
+
 # This section does final configuration on the images.  In the case of
 # SBCs this writes the bootloader to the image or sets up other
 # required binaries to boot.  In the case of images destined for a
@@ -266,6 +270,22 @@ rock64*)
 TIMEOUT=10
 # Defaults to current kernel cmdline if left empty
 CMDLINE="panic=10 coherent_pool=1M console=ttyS2,1500000 root=UUID=${ROOT_UUID} rw"
+# set this to use a DEVICETREEDIR line in place of an FDT line
+USE_DEVICETREEDIR="yes"
+# relative dtb path supplied to FDT line, as long as above is unset
+DTBPATH=""
+_EOF
+    mkdir -p "${ROOTFS}/boot/extlinux"
+    run_cmd_chroot "${ROOTFS}" "/etc/kernel.d/post-install/60-extlinux"
+    cleanup_chroot
+    ;;
+rockpro64*)
+    rk33xx_flash_uboot "${ROOTFS}/usr/lib/rockpro64-uboot" "$LOOPDEV"
+    # populate the extlinux.conf file
+    cat >"${ROOTFS}/etc/default/extlinux" <<_EOF
+TIMEOUT=10
+# Defaults to current kernel cmdline if left empty
+CMDLINE="panic=10 coherent_pool=1M console=ttyS2,115200 root=UUID=${ROOT_UUID} rw"
 # set this to use a DEVICETREEDIR line in place of an FDT line
 USE_DEVICETREEDIR="yes"
 # relative dtb path supplied to FDT line, as long as above is unset

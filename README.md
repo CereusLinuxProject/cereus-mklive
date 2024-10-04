@@ -46,9 +46,9 @@ First create a ROOTFS for the desired architecture, then use
 #### Generating ARM images
 
 Platform-specific filesystem images contain a basic filesystem layout (`/` and
-`/boot` partitions), ready to be copied to the target drive with `dd`. despite
-the naming, they are not traditional "live" images like those available on x86
-platforms, and do not need installation like live ISOs.
+`/boot` partitions), ready to be copied to the target drive with `dd`. These are
+not "live" images like those available on x86 platforms, and do not need
+installation like live ISOs.
 
 To generate these images, first create a PLATFORMFS for the desired platform,
 then use [*mkimage.sh*](#mkimagesh) to generate the image.
@@ -136,6 +136,7 @@ OPTIONS
  -s <gzip|lzo|xz>   Compression type for the squashfs image (default: xz)
  -o <file>          Output file name for the ISO image (default: automatic)
  -p "<pkg> ..."     Install additional packages in the ISO image
+ -g "<pkg> ..."     Ignore packages when building the ISO image
  -I <includedir>    Include directory structure under given path in the ROOTFS
  -S "<service> ..." Enable services in the ISO image
  -C "<arg> ..."     Add additional kernel command line arguments

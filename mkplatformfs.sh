@@ -53,7 +53,7 @@ usage() {
 
 	Supported platforms: i686, x86_64, GCP,
 	                     rpi-armv6l, rpi-armv7l, rpi-aarch64,
-	                     pinebookpro, pinephone, rock64
+	                     pinebookpro, pinephone, rock64, rockpro64
 	
 	OPTIONS
 	 -b <system-pkg>  Set an alternative base-system package (default: base-system)
@@ -97,6 +97,11 @@ shift $((OPTIND - 1))
 PLATFORM="$1"
 BASE_TARBALL="$2"
 
+if [ -z "$PLATFORM" ] || [ -z "$BASE_TARBALL" ]; then
+	usage >&2
+	exit 1
+fi
+
 # This is an aweful hack since the script isn't using privesc
 # mechanisms selectively.  This is a TODO item.
 if [ "$(id -u)" -ne 0 ]; then
@@ -122,6 +127,7 @@ case "$PLATFORM" in
     pinebookpro*) PKGS="$BASEPKG ${PLATFORM%-*}-base" ;;
     pinephone*) PKGS="$BASEPKG ${PLATFORM%-*}-base" ;;
     rock64*) PKGS="$BASEPKG ${PLATFORM%-*}-base" ;;
+    rockpro64*) PKGS="$BASEPKG ${PLATFORM%-*}-base" ;;
     *) die "$PROGNAME: invalid platform!";;
 esac
 
