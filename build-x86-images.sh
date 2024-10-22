@@ -25,14 +25,14 @@ usage() {
 
 	OPTIONS
 	 -a <arch>     Set XBPS_ARCH in the image
-	 -b <variant>  One of base, xfce, lxqt cinnamon, plasma, fluxbox i3wm, or lxqt
+	 -b <variant>  One of base, lxqt, xfce, cinnamon, plasma, fluxbox, or i3wm
 	               (default: base). May be specified multiple times to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYY.MM.DD format)
 	 -t <arch-date-variant>
 	               Equivalent to setting -a, -b, and -d
 	 -r <repo>     Use this XBPS repository. May be specified multiple times
 	 -h            Show this help and exit
-	 -s	       Set the privilege scalation package, one of sudo or doas (default: sudo).
+	 -s            Set the privilege scalation package, one of sudo or doas (default: sudo).
 	 -V            Show version and exit
 
 	Other options can be passed directly to mklive.sh by specifying them after the --.
@@ -103,7 +103,7 @@ build_variant() {
     THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
 
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan fastfetch htop nano void-repo-nonfree accountsservice gparted hplip-gui htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc breeze ntfs-3g touchegg-gce xz unrar unzip zip otter-browser qt5ct cups cups-browsed"
+    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan fastfetch htop nano void-repo-nonfree accountsservice gparted htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc ntfs-3g xz unrar unzip zip otter-browser cups cups-browsed"
 
     # Add kernel headers in order to DKMS work properly
     if [ "${ARCH}" = "i686" ]; then
@@ -133,38 +133,38 @@ esac
         base) 
             SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
 	;;
+        lxqt)
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad"
+            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed lightdm"
+            LIGHTDM_SESSION=lxqt
+        ;;
         xfce)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-xfce-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets evince xarchiver blueman rhythmbox galculator-gtk3 blesh-git"
-            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-xfce-presets lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings cereus-lightdm-presets evince xarchiver blueman rhythmbox galculator-gtk3 qt5ct qt6ct"
+            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed"
             LIGHTDM_SESSION=xfce
         ;;
+        # WIP
         cinnamon)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo{,-emblems,-extensions,-fileroller,-image-converter,-preview,-python,-terminal,compare,audio-tab} clipit xviewer"
-            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg"
+            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo clipit xviewer"
+            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed"
             LIGHTDM_SESSION=cinnamon
         ;;
         plasma)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
-            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg sddm"
+            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed sddm"
         ;;
-        lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad blesh"
-            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg lightdm"
-            LIGHTDM_SESSION=lxqt
-        ;;
-        # UNOFFICIAL EDITIONS
+        # UNOFFICIAL EDITIONS (INCOMPLETE)
         fluxbox)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed"
             ;;
-        # Still incomplete
         i3wm)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus i3-gaps"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty"
             ;;
         lxde)
             PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus gvfs-afc gvfs-mtp gvfs-smb udisks2"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed touchegg emptty"
+            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty"
             ;;
         *)
             >&2 echo "Unknown variant $variant"
