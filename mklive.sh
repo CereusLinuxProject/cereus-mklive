@@ -178,14 +178,17 @@ generate_initramfs() {
 
     copy_dracut_files "$ROOTFS"
     copy_autoinstaller_files "$ROOTFS"
+    
+    # Apply Plymouth theme
+    if [ -f "$ROOTFS/etc/plymouth/plymouthd.conf" ]; then
+        chroot "$ROOTFS" plymouth-set-default-theme cereus_simply
+    fi
+        
     chroot "$ROOTFS" env -i /usr/bin/dracut -N --"${INITRAMFS_COMPRESSION}" \
         --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" $KERNELVERSION
     [ $? -ne 0 ] && die "Failed to generate the initramfs"
 
-        # Apply Plymouth theme
-        if [ -f "$ROOTFS/etc/plymouth/plymouthd.conf" ]; then
-            chroot "$ROOTFS" plymouth-set-default-theme cereus_simply
-        fi 
+
 
     mv "$ROOTFS"/boot/initrd "$BOOT_DIR"
     cp "$ROOTFS"/boot/vmlinuz-$KERNELVERSION "$BOOT_DIR"/vmlinuz
@@ -356,7 +359,7 @@ XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.or
  --repository=https://repo-default.voidlinux.org/current/musl \
  --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH} \
  --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}"
-
+ 
 # Configure dracut to use overlayfs for the writable overlay.
 BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
 
