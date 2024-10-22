@@ -1633,7 +1633,7 @@ Welcome to the Cereus Linux installation. A simple and minimal \
 Linux distribution based on Void Linux with the purpose to provide \
 an user friendly experience to adapt on Void's ecosystem. \n\n
 The installation should be pretty straightforward. If you are in trouble \
-please create an issue at ${BOLD}https://github.com/cereuslinuxproject/cereus-mklive${RESET}.\n\n
+please create an issue at ${BOLD}https://codeberg.org/cereus-linux/mklive${RESET}.\n\n
 Also, we recommend to read the official Void documentation: ${BOLD}https://www.voidlinux.org${RESET}\n\n" 16 80
 
 while true; do
