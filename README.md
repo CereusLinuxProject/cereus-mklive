@@ -2,7 +2,7 @@
 
 # The Cereus Linux live image/rootfs generator and installer
 
-<a href="https://codeberg.org/cereus-linux/mklive">
+<a href="https://codeberg.org/cereus-linux/cereus-mklive">
     <img alt="Get it on Codeberg" src="https://get-it-on.codeberg.org/get-it-on-white-on-black.png" height="60">
 </a>
 
@@ -10,7 +10,7 @@ This repository is based on [void-mklive](https://github.com/void-linux/void-mkl
 
 Not all the utilities available here are actually used by us (hence, they aren't adapted for Cereus): *mkplatformfs.sh*, *mkimage.sh*, *mknet.sh*, and *release.sh*. The main reason is our distribution is currently only focused in desktop usage and that we aren't relying in CI at the moment. However, this might (or not) change in the future.
 
-The source code is mainly hosted on [Codeberg](https://codeberg.org/cereus-linux/mklive) with a mirror available on [GitHub](https://github.com/CereusLinuxProject/cereus-mklive). **Issues and pull requests should be made in Codeberg**.
+The source code is mainly hosted on [Codeberg](https://codeberg.org/cereus-linux/cereus-mklive) with a mirror available on [GitHub](https://github.com/CereusLinuxProject/cereus-mklive). **Issues and pull requests should be made in Codeberg**.
 
 ## Overview
 
