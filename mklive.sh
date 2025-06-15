@@ -34,7 +34,7 @@ INITRAMFS_PKGS=(binutils xz device-mapper dhclient dracut-network openresolv)
 PACKAGE_LIST=(jq)
 IGNORE_PKGS=()
 PLATFORMS=()
-readonly PROGNAME="$(basename "$0")"
+PROGNAME="$(basename "$0")"; readonly PROGNAME
 declare -a INCLUDE_DIRS=()
 
 die() {
@@ -124,6 +124,7 @@ copy_autoinstaller_files() {
 }
 
 install_prereqs() {
+    # shellcheck disable=SC2086
 	if ! XBPS_ARCH=$HOST_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${REQUIRED_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
@@ -131,6 +132,7 @@ install_prereqs() {
 }
 
 install_target_pkgs() {
+    # shellcheck disable=SC2086
 	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
@@ -149,6 +151,7 @@ post_install_packages() {
 }
 
 install_packages() {
+    # shellcheck disable=SC2086
     if ! XBPS_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -r "$ROOTFS" \
         ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Missing required binary packages, exiting..."
@@ -156,6 +159,7 @@ install_packages() {
 
     mount_pseudofs
 
+    # shellcheck disable=SC2086
     if ! LANG=C XBPS_TARGET_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -U -r "$ROOTFS" \
         ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
@@ -196,10 +200,10 @@ ignore_packages() {
 enable_services() {
     SERVICE_LIST="$*"
     for service in $SERVICE_LIST; do
-        if ! [ -e $ROOTFS/etc/sv/$service ]; then
+        if ! [ -e "$ROOTFS"/etc/sv/"$service" ]; then
             die "service $service not in /etc/sv"
         fi
-        ln -sf /etc/sv/$service $ROOTFS/etc/runit/runsvdir/default/
+        ln -sf /etc/sv/"$service" "$ROOTFS"/etc/runit/runsvdir/default/
     done
 }
 
@@ -217,6 +221,8 @@ copy_include_directories() {
 	    # Correct includedir permissions.
 	    touch .includedir_list
 	    find "$includedir" | sed 's|'"$includedir"'|'"$ROOTFS"'|g' | tee .includedir_list >/dev/null
+        # Intentionally splitting
+        # shellcheck disable=SC2046
 	    chown root:root $(cat .includedir_list)
 	    rm .includedir_list
     done
@@ -234,7 +240,7 @@ generate_initramfs() {
     fi
         
     if ! chroot "$ROOTFS" env -i /usr/bin/dracut -N --"${INITRAMFS_COMPRESSION}" \
-        --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" $KERNELVERSION; then
+        --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" "$KERNELVERSION"; then
 			die "Failed to generate the initramfs"
 	fi
 
@@ -253,6 +259,7 @@ array_contains() {
 
 cleanup_rootfs() {
     for f in "${INITRAMFS_PKGS[@]}"; do
+        # shellcheck disable=SC2086
         if ! array_contains PACKAGE_LIST $f; then
             revdeps=$(xbps-query -r "$ROOTFS" -X $f)
             if [ -n "$revdeps" ]; then
@@ -276,7 +283,7 @@ generate_isolinux_boot() {
     cp -f "$SYSLINUX_DATADIR"/reboot.c32 "$ISOLINUX_DIR"
     cp -f "$SYSLINUX_DATADIR"/poweroff.c32 "$ISOLINUX_DIR"
     cp -f isolinux/isolinux.cfg.in "$ISOLINUX_DIR"/isolinux.cfg
-    cp -f ${SPLASH_IMAGE} "$ISOLINUX_DIR"
+    cp -f "${SPLASH_IMAGE}" "$ISOLINUX_DIR"
 
     sed -i  -e "s|@@SPLASHIMAGE@@|$(basename "${SPLASH_IMAGE}")|" \
         -e "s|@@KERNVER@@|${KERNELVERSION}|" \
@@ -315,6 +322,7 @@ menuentry "${entrytitle}" --id "${id}" ${hotkey:+--hotkey $hotkey} {
     initrd (\${voidlive})/boot/initrd
 EOF
         if [ -n "${dtb}" ]; then
+            # shellcheck disable=SC2016
             printf '    devicetree (${voidlive})/boot/dtbs/%s\n' "${dtb}" >> "$GRUB_DIR"/grub_void.cfg
         fi
         printf '}\n' >> "$GRUB_DIR"/grub_void.cfg
@@ -344,6 +352,8 @@ EOF
 
     for platform in "${PLATFORMS[@]}"; do
         (
+            # shellcheck source=platforms/x13s.sh
+            # shellcheck source=platforms/pinebookpro.sh
             . "platforms/${platform}.sh"
 
             if [ -n "$PLATFORM_DTB" ]; then
@@ -516,6 +526,7 @@ generate_iso_image() {
 # main()
 #
 while getopts "a:b:r:c:C:T:Kk:l:i:I:S:e:s:o:p:g:v:P:Vh" opt; do
+	# shellcheck disable=SC2206
 	case $opt in
 		a) TARGET_ARCH="$OPTARG";;
 		b) BASE_SYSTEM_PKG="$OPTARG";;
@@ -555,16 +566,16 @@ BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
 HOST_ARCH=$(xbps-uhelper arch)
 
 # Set defaults
-: ${TARGET_ARCH:=$(xbps-uhelper arch 2>/dev/null || uname -m)}
-: ${XBPS_CACHEDIR:="$(pwd -P)"/xbps-cachedir-${TARGET_ARCH}}
-: ${XBPS_HOST_CACHEDIR:="$(pwd -P)"/xbps-cachedir-${HOST_ARCH}}
-: ${KEYMAP:=us}
-: ${LOCALE:=en_US.UTF-8}
-: ${INITRAMFS_COMPRESSION:=xz}
-: ${SQUASHFS_COMPRESSION:=xz}
-: ${BASE_SYSTEM_PKG:=base-cereus}
-: ${BOOT_TITLE:="Cereus Linux"}
-: ${LINUX_VERSION:=linux-default-cereus}
+: "${TARGET_ARCH:=$(xbps-uhelper arch 2>/dev/null || uname -m)}"
+: "${XBPS_CACHEDIR:="$(pwd -P)"/xbps-cachedir-${TARGET_ARCH}}"
+: "${XBPS_HOST_CACHEDIR:="$(pwd -P)"/xbps-cachedir-${HOST_ARCH}}"
+: "${KEYMAP:=us}"
+: "${LOCALE:=en_US.UTF-8}"
+: "${INITRAMFS_COMPRESSION:=xz}"
+: "${SQUASHFS_COMPRESSION:=xz}"
+: "${BASE_SYSTEM_PKG:=base-cereus}"
+: "${BOOT_TITLE:="Cereus Linux"}"
+: "${LINUX_VERSION:=linux-default-cereus}"
 
 XBPS_TARGET_ARCH="$TARGET_ARCH" register_binfmt
 
@@ -579,6 +590,8 @@ case "$TARGET_ARCH" in
 		BOOTLOADERS=(grub)
 		IMAGE_TYPE='efi'
 		TARGET_PKGS+=(grub-arm64-efi)
+        # shellcheck source=platforms/x13s.sh
+        # shellcheck source=platforms/pinebookpro.sh
         for platform in "${PLATFORMS[@]}"; do
             if [ -r "platforms/${platform}.sh" ]; then
                 . "platforms/${platform}.sh"
@@ -623,24 +636,27 @@ STEP_COUNT=10
 [ "${#IGNORE_PKGS[@]}" -gt 0 ] && STEP_COUNT=$((STEP_COUNT+1))
 [ -n "$ROOT_SHELL" ] && STEP_COUNT=$((STEP_COUNT+1))
 
-: ${SYSLINUX_DATADIR:="$CEREUSTARGETDIR"/usr/lib/syslinux}
-: ${GRUB_DATADIR:="$CEREUSTARGETDIR"/usr/share/grub}
-: ${SPLASH_IMAGE:=data/splash.png}
-: ${XBPS_INSTALL_CMD:=xbps-install}
-: ${XBPS_REMOVE_CMD:=xbps-remove}
-: ${XBPS_QUERY_CMD:=xbps-query}
-: ${XBPS_RINDEX_CMD:=xbps-rindex}
-: ${XBPS_UHELPER_CMD:=xbps-uhelper}
-: ${XBPS_RECONFIGURE_CMD:=xbps-reconfigure}
+: "${SYSLINUX_DATADIR:="$CEREUSTARGETDIR"/usr/lib/syslinux}"
+: "${GRUB_DATADIR:="$CEREUSTARGETDIR"/usr/share/grub}"
+: "${SPLASH_IMAGE:=data/splash.png}"
+: "${XBPS_INSTALL_CMD:=xbps-install}"
+: "${XBPS_REMOVE_CMD:=xbps-remove}"
+: "${XBPS_QUERY_CMD:=xbps-query}"
+: "${XBPS_RINDEX_CMD:=xbps-rindex}"
+: "${XBPS_UHELPER_CMD:=xbps-uhelper}"
+: "${XBPS_RECONFIGURE_CMD:=xbps-reconfigure}"
 
 mkdir -p "$ROOTFS" "$CEREUSHOSTDIR" "$CEREUSTARGETDIR" "$GRUB_DIR" "$ISOLINUX_DIR"
 
 print_step "Synchronizing XBPS repository data..."
 copy_xbps_keys "$ROOTFS"
+# shellcheck disable=SC2086
 XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$ROOTFS" ${XBPS_REPOSITORY} -S
 copy_xbps_keys "$CEREUSHOSTDIR"
+# shellcheck disable=SC2086
 XBPS_ARCH=$HOST_ARCH $XBPS_INSTALL_CMD -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} -S
 copy_xbps_keys "$CEREUSTARGETDIR"
+# shellcheck disable=SC2086
 XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY} -S
 
 # Get linux version for ISO
@@ -654,11 +670,16 @@ case "$LINUX_VERSION" in
     linux-@(default|legacy|mainline)-cereus)
 	IGNORE_PKGS+=(linux)
 	PACKAGE_LIST+=("$LINUX_VERSION")
+	# shellcheck disable=SC2030
+	# shellcheck disable=SC2086
         LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
 	;;
     linux-@(mainline|lts))
         IGNORE_PKGS+=(linux)
         PACKAGE_LIST+=("$LINUX_VERSION")
+        # shellcheck disable=SC2030
+        # shellcheck disable=SC2031
+        # shellcheck disable=SC2086
         LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
         ;;
     linux-asahi)
@@ -667,6 +688,9 @@ case "$LINUX_VERSION" in
         ;;
     linux)
         PACKAGE_LIST+=(linux)
+        # shellcheck disable=SC2030
+        # shellcheck disable=SC2031
+        # shellcheck disable=SC2086
         LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x linux | grep 'linux[0-9._]\+')"
         ;;
     *)
@@ -675,8 +699,11 @@ case "$LINUX_VERSION" in
 esac
 shopt -u extglob
 
+# shellcheck disable=SC2030
+# shellcheck disable=SC2031
+# shellcheck disable=SC2086
 _kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -p pkgver $LINUX_VERSION)"
-if ! KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion ${_kver}); then
+if ! KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion "${_kver}"); then
     die "Failed to find kernel package version"
 fi
 
@@ -684,7 +711,7 @@ if [ "$LINUX_VERSION" = linux-asahi ]; then
     KERNELVERSION="${KERNELVERSION%%_*}-asahi_${KERNELVERSION##*_}"
 fi
 
-: ${OUTPUT_FILE="cereus-beta-live-${TARGET_ARCH}-${KERNELVERSION}-$(date -u +%Y.%m%.d).iso"}
+: "${OUTPUT_FILE="cereus-beta-live-${TARGET_ARCH}-${KERNELVERSION}-$(date -u +%Y.%m%.d).iso"}"
 
 print_step "Installing software to generate the image: ${REQUIRED_PKGS[*]} ..."
 install_prereqs "${REQUIRED_PKGS[@]}"
@@ -704,8 +731,9 @@ fi
 print_step "Installing cereus pkgs into the rootfs: ${PACKAGE_LIST[*]} ..."
 install_packages
 
-: ${DEFAULT_SERVICE_LIST:=agetty-tty1 agetty-tty2 agetty-tty3 agetty-tty4 agetty-tty5 agetty-tty6 udevd}
+: "${DEFAULT_SERVICE_LIST:=agetty-tty1 agetty-tty2 agetty-tty3 agetty-tty4 agetty-tty5 agetty-tty6 udevd}"
 print_step "Enabling services: ${SERVICE_LIST} ..."
+# shellcheck disable=SC2086
 enable_services ${DEFAULT_SERVICE_LIST} ${SERVICE_LIST}
 
 if [ -n "$ROOT_SHELL" ]; then
