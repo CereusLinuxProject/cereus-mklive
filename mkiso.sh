@@ -8,11 +8,6 @@ PROGNAME=$(basename "$0")
 ARCH=$(uname -m)
 IMAGES="base xfce lxqt cinnamon plasma fluxbox i3wm lxde"
 TRIPLET=
-REPO=
-ARCH_PKGS=
-REPO_NONFREE=
-REPO_MULTILIB=
-REPO_MULTILIB_NONFREE=
 SU_PKG=sudo
 DATE=$(date -u +%Y.%m.%d)
 
@@ -45,7 +40,7 @@ case $opt in
     a) ARCH="$OPTARG";;
     b) IMAGES="$OPTARG";;
     d) DATE="$OPTARG";;
-    r) REPO="-r $OPTARG $REPO";;
+    r) ADDITIONAL_REPO+=("-r $OPTARG");;
     t) TRIPLET="$OPTARG";;
     s) SU_PKG="$OPTARG";;
     V) version; exit 0;;
@@ -55,7 +50,7 @@ esac
 done
 shift $((OPTIND - 1))
 
-case $SU_PKG in
+case "$SU_PKG" in
     sudo) SU_PKG="sudo";;
     doas) SU_PKG="opendoas";;
     *) echo "SU_PKG: Invalid option $SU_PKG"; exit 1;;
@@ -104,124 +99,113 @@ build_variant() {
     shift
     IMG=cereus-beta-live-${ARCH}-${variant}-${DATE}.iso
 
+    CEREUS_INCLUDEDIR="$PWD/includedir"
+    A11Y_PKGS=(espeakup void-live-audio brltty)
+    PKGS+=(dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony tmux xtools-minimal "${A11Y_PKGS[*]}" "$SU_PKG")
+    FONTS=(font-misc-misc terminus-font dejavu-fonts-ttf)
+    # Not required for now, but leaving here just in case
+    # shellcheck disable=SC2034
+    WAYLAND_PKGS=("$GFX_WL_PKGS" "${FONTS[*]}" orca)
+    XORG_PKGS=("${FONTS[*]}" xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth orca)
+    SERVICES=(sshd chronyd)
+
     # el-cheapo installer is unsupported on arm because arm doesn't install a kernel by default
     # and to work around that would add too much complexity to it
     # thus everyone should just do a chroot install anyways
     WANT_INSTALLER=no
     case "$ARCH" in
         x86_64*|i686*)
-            GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
-            GFX_PKGS="xorg-video-drivers xf86-video-intel"
-            GFX_WL_PKGS="mesa-dri"
+            PKGS+=(grub-i386-efi grub-x86_64-efi)
+            XORG_PKGS+=(xorg-video-drivers xf86-video-intel)
+            WAYLAND_PKGS+=(mesa-dri)
             WANT_INSTALLER=yes
             TARGET_ARCH="$ARCH"
             ;;
         aarch64*)
-            GRUB_PKGS="grub-arm64-efi"
-            GFX_PKGS="xorg-video-drivers"
-            GFX_WL_PKGS="mesa-dri"
+            PKGS+=(grub-arm64-efi)
+            XORG_PKGS+=(xorg-video-drivers)
+            WAYLAND_PKGS+=(mesa-dri)
             TARGET_ARCH="$ARCH"
             ;;
         asahi*)
-            GRUB_PKGS="asahi-base asahi-scripts grub-arm64-efi"
-            GFX_PKGS="mesa-asahi-dri"
-            GFX_WL_PKGS="mesa-asahi-dri"
+            PKGS+=(asahi-base asahi-scripts grub-arm64-efi)
+            XORG_PKGS+=(mesa-asahi-dri)
+            WAYLAND_PKGS+=(mesa-asahi-dri)
             # Intentionally unused but preserved just in case
             # shellcheck disable=SC2034
             KERNEL_PKG="linux-asahi"
             # shellcheck disable=SC2034
             TARGET_ARCH="aarch64${ARCH#asahi}"
             if [ "$variant" = xfce ]; then
+                # Not implemented yet
                 info_msg "xfce is not supported on asahi, switching to xfce-wayland"
                 variant="xfce-wayland"
             fi
             ;;
     esac
 
-    CEREUS_INCLUDEDIR="$PWD/includedir"
-    A11Y_PKGS="espeakup void-live-audio brltty"
-    ARCH_PKGS=""
-    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony tmux xtools-minimal $A11Y_PKGS $SU_PKG $GRUB_PKGS"
-    FONTS="font-misc-misc terminus-font dejavu-fonts-ttf"
-    # Not required for now, but leaving here just in case
-    # shellcheck disable=SC2034
-    WAYLAND_PKGS="$GFX_WL_PKGS $FONTS orca"
-    XORG_PKGS="$GFX_PKGS $FONTS xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth orca"
-    SERVICES="sshd chronyd"
-
-# Declare base repositories url
-    #VOID_REPO="https://repo-default.voidlinux.org/current"
-    VOID_REPO="https://mirrors.servercentral.com/voidlinux/current"
-    CEREUS_REPO="https://sourceforge.net/projects/cereus-linux/files/repos"
-    REPO_EXTRA="${CEREUS_REPO}/cereus-extra/${ARCH}"
-    REPO_CORE="${CEREUS_REPO}/cereus-core/${ARCH}"
-
-# Default common themes among all editions
-    THEMES_PKGS="Graphite-kvantum-theme-black Graphite-gtk-theme-black Tela-icon-theme-green Graphite-color-schemes-black Graphite-cursors"
-
 # Default common base packages among all editions, except the base one.
-    CEREUS_BASEPKGS="$ARCH_PKGS calamares-cereus simple-scan fastfetch htop nano void-repo-nonfree accountsservice gparted htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc ntfs-3g xz unrar unzip zip otter-browser cups cups-browsed"
+    CEREUS_BASEPKGS+=(calamares-cereus simple-scan fastfetch htop nano void-repo-nonfree accountsservice gparted htop mpv mypaint xtools broadcom-wl-dkms hardinfo timeshift psmisc ntfs-3g xz unrar unzip zip otter-browser cups cups-browsed)
 
     # Add kernel headers in order to DKMS work properly
     if [ "${ARCH}" = "i686" ]; then
-        CEREUS_BASEPKGS="${CEREUS_BASEPKGS} linux-legacy-cereus-headers"
+        CEREUS_BASEPKGS+=(linux-legacy-cereus-headers)
     else
-        CEREUS_BASEPKGS="${CEREUS_BASEPKGS} linux-default-cereus-headers"
+        CEREUS_BASEPKGS+=(linux-default-cereus-headers)
     fi
 
-# Change locale.conf for calamares depending on target libc and set specific arch pkgs
 case ${ARCH} in
     x86_64)
-        ARCH_PKGS="void-repo-multilib"
-        REPO_NONFREE="${VOID_REPO}/nonfree"
-        REPO_MULTILIB="${VOID_REPO}/multilib"
-        REPO_MULTILIB_NONFREE="${VOID_REPO}/multilib/nonfree"
-        sed -i 's/musl/libc/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
+        PKGS+=(void-repo-{multilib{,-nonfree},nonfree}) ;;
     *-musl)
-        REPO_NONFREE="${VOID_REPO}/musl/nonfree"
-        sed -i 's/libc/musl/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
+        PKGS+=(void-repo-nonfree) ;;
     i686)
-        REPO_NONFREE="${VOID_REPO}/nonfree"
-        sed -i 's/musl/libc/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
+        PKGS+=(void-repo-nonfree) ;;
 esac
+
     LIGHTDM_SESSION=''
 
-    case $variant in
+    # Append them only if the variant is not base
+    if [ "$variant" != base ]; then
+        PKGS+=("${CEREUS_BASEPKGS[*]}" "${XORG_PKGS[*]}")
+    fi
+
+    case "$variant" in
         base)
-            SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
+            SERVICES+=(dhcpcd wpa_supplicant acpid)
 	;;
         lxqt)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-lxqt-presets lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad"
-            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed lightdm"
+            PKGS+=(cereus-lxqt-presets lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad)
+            SERVICES=(acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed lightdm)
             LIGHTDM_SESSION=lxqt
         ;;
         xfce)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS cereus-xfce-presets lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings cereus-lightdm-presets evince xarchiver blueman rhythmbox galculator-gtk3 qt5ct qt6ct"
-            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed"
+            PKGS+=(cereus-xfce-presets lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings cereus-lightdm-presets evince xarchiver blueman rhythmbox galculator-gtk3 qt5ct qt6ct)
+            SERVICES=(acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed)
             LIGHTDM_SESSION=xfce
         ;;
         # WIP
         cinnamon)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo clipit xviewer"
-            SERVICES="$SERVICES acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed"
+            PKGS+=(lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cinnamon gnome-keyring colord tilix gvfs-afc gvfs-mtp gvfs-smb udisks2 blueman eog gnome-screenshot qt5ct rhythmbox xed-xapps xdg-user-dirs evince galculator-gtk3 nemo clipit xviewer)
+            SERVICES+=(acpid dbus elogind lightdm bluetoothd NetworkManager polkitd cupsd cups-browsed)
             LIGHTDM_SESSION=cinnamon
         ;;
         plasma)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle"
-            SERVICES="$SERVICES acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed sddm"
+            PKGS+=(kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle)
+            SERVICES=(acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed sddm)
         ;;
         # UNOFFICIAL EDITIONS (INCOMPLETE)
         fluxbox)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS fluxbox tint2 lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed"
+            PKGS+=(fluxbox tint2 lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager)
+            SERVICES+=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed)
             ;;
         i3wm)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus i3-gaps"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty"
+            PKGS+=(lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus i3)
+            SERVICES+=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty)
             ;;
         lxde)
-            PKGS="$PKGS $XORG_PKGS $THEMES_PKGS $ARCH_PKGS $CEREUS_BASEPKGS lxde lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus gvfs-afc gvfs-mtp gvfs-smb udisks2"
-            SERVICES="$SERVICES acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty"
+            PKGS+=(lxde lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus gvfs-afc gvfs-mtp gvfs-smb udisks)
+            SERVICES=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty)
             ;;
         *)
             >&2 echo "Unknown variant $variant"
@@ -229,15 +213,11 @@ esac
         ;;
     esac
 
-    if [ -n "$LIGHTDM_SESSION" ]; then
+  if [ -n "$LIGHTDM_SESSION" ]; then
         mkdir -p "$INCLUDEDIR"/etc/lightdm
         echo "$LIGHTDM_SESSION" > "$INCLUDEDIR"/etc/lightdm/.session
-        # needed to show the keyboard layout menu on the login screen
-        cat <<- EOF > "$INCLUDEDIR"/etc/lightdm/lightdm-gtk-greeter.conf
-[greeter]
-indicators = ~host;~spacer;~clock;~spacer;~layout;~session;~a11y;~power
-EOF
     fi
+
 
     if [ "$WANT_INSTALLER" = yes ]; then
         include_installer
@@ -251,14 +231,9 @@ EOF
         setup_pipewire
     fi
 
-#    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" \
-#        ${KERNEL_PKG:+-v $KERNEL_PKG} ${REPO} "$@"
-
-    DEFAULT_REPOS="-r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE}"
-    echo "${DEFAULT_REPOS}"
     # Intentionally unquotting repositories variables
     # shellcheck disable=SC2086
-    ./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" -I "$CEREUS_INCLUDEDIR/${variant}" ${DEFAULT_REPOS} ${REPO} "$@"
+    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "${PKGS[*]}" -S "${SERVICES[*]}" -I "$INCLUDEDIR" -I "$CEREUS_INCLUDEDIR/${variant}" "${ADDITIONAL_REPO[*]}" "$@"
 
 	cleanup
 }

@@ -124,8 +124,9 @@ copy_autoinstaller_files() {
 }
 
 install_prereqs() {
+    # shellcheck disable=SC2048
     # shellcheck disable=SC2086
-	if ! XBPS_ARCH=$HOST_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
+	if ! XBPS_ARCH="$HOST_ARCH" "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY[*]} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${REQUIRED_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
     fi
@@ -133,7 +134,8 @@ install_prereqs() {
 
 install_target_pkgs() {
     # shellcheck disable=SC2086
-	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY} \
+    # shellcheck disable=SC2048
+	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY[*]} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
 	fi
@@ -152,16 +154,18 @@ post_install_packages() {
 
 install_packages() {
     # shellcheck disable=SC2086
+    # shellcheck disable=SC2048
     if ! XBPS_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -r "$ROOTFS" \
-        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+        ${XBPS_REPOSITORY[*]} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Missing required binary packages, exiting..."
 	fi
 
     mount_pseudofs
 
     # shellcheck disable=SC2086
+    # shellcheck disable=SC2048
     if ! LANG=C XBPS_TARGET_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -U -r "$ROOTFS" \
-        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+        ${XBPS_REPOSITORY[*]} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
 	fi
 
@@ -171,6 +175,16 @@ install_packages() {
     # Enable choosen UTF-8 locale and generate it into the target rootfs.
     if [ -f "$ROOTFS"/etc/default/libc-locales ]; then
         sed -e "s/\#\(${LOCALE}.*\)/\1/g" -i "$ROOTFS"/etc/default/libc-locales
+    fi
+
+    if [ -f "$ROOTFS"/etc/calamares/modules/locale.conf ]; then
+        case "$TARGET_ARCH" in
+        x86_64|i686)
+            LOCALES_FILE="libc-locales" ;;
+        x86_64-musl)
+            LOCALES_FILE="musl-locales" ;;
+        esac
+        sed -i "s/@@LOCALES_FILE@@/${LOCALES_FILE}/" "$ROOTFS"/etc/calamares/modules/locale.conf
     fi
 
     if XBPS_ARCH=$BASE_ARCH "$XBPS_QUERY_CMD" -r "$ROOTFS" dkms >/dev/null 2>&1; then
@@ -530,7 +544,7 @@ while getopts "a:b:r:c:C:T:Kk:l:i:I:S:e:s:o:p:g:v:P:Vh" opt; do
 	case $opt in
 		a) TARGET_ARCH="$OPTARG";;
 		b) BASE_SYSTEM_PKG="$OPTARG";;
-		r) XBPS_REPOSITORY="--repository=$OPTARG $XBPS_REPOSITORY";;
+		r) XBPS_REPOSITORY+=(--repository=$OPTARG);;
 		c) XBPS_CACHEDIR="$OPTARG";;
 		g) IGNORE_PKGS+=($OPTARG) ;;
 		K) readonly KEEP_BUILDDIR=1;;
@@ -553,12 +567,6 @@ while getopts "a:b:r:c:C:T:Kk:l:i:I:S:e:s:o:p:g:v:P:Vh" opt; do
 	esac
 done
 shift $((OPTIND - 1))
-
-XBPS_REPOSITORY="$XBPS_REPOSITORY --repository=https://repo-default.voidlinux.org/current \
- --repository=https://repo-default.voidlinux.org/current/musl \
- --repository=https://repo-default.voidlinux.org/current/aarch64 \
- --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/${ARCH} \
- --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/${ARCH}"
  
 # Configure dracut to use overlayfs for the writable overlay.
 BOOT_CMDLINE="$BOOT_CMDLINE rd.live.overlay.overlayfs=1 "
@@ -578,6 +586,9 @@ HOST_ARCH=$(xbps-uhelper arch)
 : "${LINUX_VERSION:=linux-default-cereus}"
 
 XBPS_TARGET_ARCH="$TARGET_ARCH" register_binfmt
+
+# Set repositories for mklive
+set_repos
 
 case "$TARGET_ARCH" in
 	x86_64*|i686*)
@@ -650,14 +661,17 @@ mkdir -p "$ROOTFS" "$CEREUSHOSTDIR" "$CEREUSTARGETDIR" "$GRUB_DIR" "$ISOLINUX_DI
 
 print_step "Synchronizing XBPS repository data..."
 copy_xbps_keys "$ROOTFS"
+# shellcheck disable=SC2048
 # shellcheck disable=SC2086
-XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$ROOTFS" ${XBPS_REPOSITORY} -S
+XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]} -S
 copy_xbps_keys "$CEREUSHOSTDIR"
+# shellcheck disable=SC2048
 # shellcheck disable=SC2086
-XBPS_ARCH=$HOST_ARCH $XBPS_INSTALL_CMD -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} -S
+XBPS_ARCH=$HOST_ARCH $XBPS_INSTALL_CMD -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY[*]} -S
 copy_xbps_keys "$CEREUSTARGETDIR"
 # shellcheck disable=SC2086
-XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY} -S
+# shellcheck disable=SC2048
+XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY[*]} -S
 
 # Get the default kernel metapackage for the target arch
 case "$TARGET_ARCH" in
@@ -680,7 +694,8 @@ case "$LINUX_VERSION" in
         PACKAGE_LIST+=("$LINUX_VERSION")
         # shellcheck disable=SC2030
         # shellcheck disable=SC2086
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
+        # shellcheck disable=SC2048
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
 	;;
     linux-@(mainline|lts))
         IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
@@ -688,7 +703,8 @@ case "$LINUX_VERSION" in
         # shellcheck disable=SC2030
         # shellcheck disable=SC2031
         # shellcheck disable=SC2086
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
+        # shellcheck disable=SC2048
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
         ;;
     linux-asahi)
         IGNORE_PKGS+=(linux)
@@ -699,7 +715,8 @@ case "$LINUX_VERSION" in
         # shellcheck disable=SC2030
         # shellcheck disable=SC2031
         # shellcheck disable=SC2086
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x linux | grep 'linux[0-9._]\+')"
+        # shellcheck disable=SC2048
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x linux | grep 'linux[0-9._]\+')"
         ;;
     *)
         die "-v option must be in format linux<version> or linux-<series>"
@@ -710,7 +727,8 @@ shopt -u extglob
 # shellcheck disable=SC2030
 # shellcheck disable=SC2031
 # shellcheck disable=SC2086
-_kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -p pkgver $LINUX_VERSION)"
+# shellcheck disable=SC2048
+_kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -p pkgver $LINUX_VERSION)"
 if ! KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion "${_kver}"); then
     die "Failed to find kernel package version"
 fi
