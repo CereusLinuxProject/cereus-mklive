@@ -124,15 +124,17 @@ copy_autoinstaller_files() {
 }
 
 install_prereqs() {
-    XBPS_ARCH=$HOST_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
-         -c "$XBPS_HOST_CACHEDIR" -y "${REQUIRED_PKGS[@]}"
-    [ $? -ne 0 ] && die "Failed to install required software, exiting..."
+	if ! XBPS_ARCH=$HOST_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
+		-c "$XBPS_HOST_CACHEDIR" -y "${REQUIRED_PKGS[@]}"; then
+			die "Failed to install required software, exiting..."
+    fi
 }
 
 install_target_pkgs() {
-    XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
-         -c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"
-    [ $? -ne 0 ] && die "Failed to install required software, exiting..."
+	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
+		-c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"; then
+			die "Failed to install required software, exiting..."
+	fi
 }
 
 post_install_packages() {
@@ -147,15 +149,17 @@ post_install_packages() {
 }
 
 install_packages() {
-    XBPS_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -r "$ROOTFS" \
-        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"
-    [ $? -ne 0 ] && die "Missing required binary packages, exiting..."
+    if ! XBPS_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -r "$ROOTFS" \
+        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+			die "Missing required binary packages, exiting..."
+	fi
 
     mount_pseudofs
 
-    LANG=C XBPS_TARGET_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -U -r "$ROOTFS" \
-        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"
-    [ $? -ne 0 ] && die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
+    if ! LANG=C XBPS_TARGET_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -U -r "$ROOTFS" \
+        ${XBPS_REPOSITORY} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+			die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
+	fi
 
     xbps-reconfigure -r "$ROOTFS" -f base-files >/dev/null 2>&1
     chroot "$ROOTFS" env -i xbps-reconfigure -f base-files
@@ -200,8 +204,9 @@ enable_services() {
 }
 
 change_shell() {
-    chroot "$ROOTFS" chsh -s "$ROOT_SHELL" root
-    [ $? -ne 0 ] && die "Failed to change the shell for root"
+    if ! chroot "$ROOTFS" chsh -s "$ROOT_SHELL" root; then
+		die "Failed to change the shell for root"
+	fi
 }
 
 copy_include_directories() {
@@ -228,9 +233,10 @@ generate_initramfs() {
         chroot "$ROOTFS" plymouth-set-default-theme cereus_simply
     fi
         
-    chroot "$ROOTFS" env -i /usr/bin/dracut -N --"${INITRAMFS_COMPRESSION}" \
-        --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" $KERNELVERSION
-    [ $? -ne 0 ] && die "Failed to generate the initramfs"
+    if ! chroot "$ROOTFS" env -i /usr/bin/dracut -N --"${INITRAMFS_COMPRESSION}" \
+        --add-drivers "ahci" --force-add "vmklive autoinstaller" --omit systemd "/boot/initrd" $KERNELVERSION; then
+			die "Failed to generate the initramfs"
+	fi
 
     mv "$ROOTFS"/boot/initrd "$BOOT_DIR"
 	case "$TARGET_ARCH" in
@@ -405,15 +411,14 @@ EOF
 
 	build_grub_image() {
 		local GRUB_ARCH="$1" EFI_ARCH="$2"
-		xbps-uchroot "$CEREUSTARGETDIR" grub-mkstandalone -- \
+		if ! xbps-uchroot "$CEREUSTARGETDIR" grub-mkstandalone -- \
 			 --directory="/usr/lib/grub/${GRUB_ARCH}-efi" \
 			 --format="${GRUB_ARCH}-efi" \
 			 --output="/tmp/boot${EFI_ARCH,,}.efi" \
-			 "boot/grub/grub.cfg"
-		if [ $? -ne 0 ]; then
-			umount "$GRUB_EFI_TMPDIR"
-			losetup --detach "${LOOP_DEVICE}"
-			die "Failed to generate EFI loader"
+			 "boot/grub/grub.cfg"; then
+                umount "$GRUB_EFI_TMPDIR"
+                losetup --detach "${LOOP_DEVICE}"
+                die "Failed to generate EFI loader"
 		fi
 		mkdir -p "${GRUB_EFI_TMPDIR}"/EFI/BOOT
 		cp -f "$CEREUSTARGETDIR/tmp/boot${EFI_ARCH,,}.efi" "${GRUB_EFI_TMPDIR}/EFI/BOOT/BOOT${EFI_ARCH^^}.EFI"
@@ -671,14 +676,12 @@ esac
 shopt -u extglob
 
 _kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -p pkgver $LINUX_VERSION)"
-KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion ${_kver})
+if ! KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion ${_kver}); then
+    die "Failed to find kernel package version"
+fi
 
 if [ "$LINUX_VERSION" = linux-asahi ]; then
     KERNELVERSION="${KERNELVERSION%%_*}-asahi_${KERNELVERSION##*_}"
-fi
-
-if [ "$?" -ne "0" ]; then
-    die "Failed to find kernel package version"
 fi
 
 : ${OUTPUT_FILE="cereus-beta-live-${TARGET_ARCH}-${KERNELVERSION}-$(date -u +%Y.%m%.d).iso"}
