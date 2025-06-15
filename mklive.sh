@@ -303,7 +303,7 @@ generate_isolinux_boot() {
 generate_grub_efi_boot() {
     cp -f grub/grub.cfg "$GRUB_DIR"
     cp -f "${SPLASH_IMAGE}" "$ISOLINUX_DIR"
-    cp -f grub/grub_void.cfg.pre "$GRUB_DIR"/grub_void.cfg
+    cp -f grub/grub_cereus.cfg.pre "$GRUB_DIR"/grub_cereus.cfg
 
     case "$TARGET_ARCH" in
         i686*|x86_64*) KERNEL_IMG=vmlinuz; WANT_MEMTEST=yes ;;
@@ -312,20 +312,20 @@ generate_grub_efi_boot() {
 
     write_entry() {
         local entrytitle="$1" id="$2" cmdline="$3" dtb="$4" hotkey="$5"
-        cat << EOF >> "$GRUB_DIR"/grub_void.cfg
+        cat << EOF >> "$GRUB_DIR"/grub_cereus.cfg
 menuentry "${entrytitle}" --id "${id}" ${hotkey:+--hotkey $hotkey} {
     set gfxpayload="keep"
-    linux (\${voidlive})/boot/${KERNEL_IMG} \\
-        root=live:CDLABEL=VOID_LIVE ro init=/sbin/init \\
+    linux (\${cereuslive})/boot/${KERNEL_IMG} \\
+        root=live:CDLABEL=CEREUS_LIVE ro init=/sbin/init \\
         rd.luks=0 rd.md=0 rd.dm=0 loglevel=4 gpt add_efi_memmap \\
         vconsole.unicode=1 vconsole.keymap=${KEYMAP} locale.LANG=${LOCALE} ${cmdline}
-    initrd (\${voidlive})/boot/initrd
+    initrd (\${cereuslive})/boot/initrd
 EOF
         if [ -n "${dtb}" ]; then
             # shellcheck disable=SC2016
-            printf '    devicetree (${voidlive})/boot/dtbs/%s\n' "${dtb}" >> "$GRUB_DIR"/grub_void.cfg
+            printf '    devicetree (${cereuslive})/boot/dtbs/%s\n' "${dtb}" >> "$GRUB_DIR"/grub_cereus.cfg
         fi
-        printf '}\n' >> "$GRUB_DIR"/grub_void.cfg
+        printf '}\n' >> "$GRUB_DIR"/grub_cereus.cfg
     }
 
     write_entries() {
@@ -362,29 +362,29 @@ EOF
             fi
 
             printf 'submenu "%s" --id platform-%s {\n' \
-                "${BOOT_TITLE} for ${PLATFORM_NAME:-$platform} >" "${platform}" >> "$GRUB_DIR"/grub_void.cfg
+                "${BOOT_TITLE} for ${PLATFORM_NAME:-$platform} >" "${platform}" >> "$GRUB_DIR"/grub_cereus.cfg
             write_entries "for ${PLATFORM_NAME:-$platform} " "-$platform" "$PLATFORM_CMDLINE" "${PLATFORM_DTB}"
-            printf '}\n' >> "$GRUB_DIR"/grub_void.cfg
+            printf '}\n' >> "$GRUB_DIR"/grub_cereus.cfg
         )
     done
 
     if [ "$WANT_MEMTEST" = yes ]; then
-        cat << 'EOF' >> "$GRUB_DIR"/grub_void.cfg
+        cat << 'EOF' >> "$GRUB_DIR"/grub_cereus.cfg
     if [ "${grub_platform}" == "efi" ]; then
         menuentry "Run Memtest86+ (RAM test)" --id memtest {
             set gfxpayload="keep"
-            linux (${voidlive})/boot/memtest.efi
+            linux (${cereuslive})/boot/memtest.efi
         }
     else
         menuentry "Run Memtest86+ (RAM test)" --id memtest {
             set gfxpayload="keep"
-            linux (${voidlive})/boot/memtest.bin
+            linux (${cereuslive})/boot/memtest.bin
         }
     fi
 EOF
     fi
 
-    cat << 'EOF' >> "$GRUB_DIR"/grub_void.cfg
+    cat << 'EOF' >> "$GRUB_DIR"/grub_cereus.cfg
 if [ "${grub_platform}" == "efi" ]; then
     menuentry 'UEFI Firmware Settings' --hotkey f --id uefifw {
         fwsetup
@@ -401,9 +401,9 @@ menuentry "System shutdown" --hotkey p --id poweroff {
     halt
 }
 EOF
-    cat grub/grub_void.cfg.post >> "$GRUB_DIR"/grub_void.cfg
+    cat grub/grub_cereus.cfg.post >> "$GRUB_DIR"/grub_cereus.cfg
 
-    sed -i -e "s|@@SPLASHIMAGE@@|$(basename "${SPLASH_IMAGE}")|" "$GRUB_DIR"/grub_void.cfg
+    sed -i -e "s|@@SPLASHIMAGE@@|$(basename "${SPLASH_IMAGE}")|" "$GRUB_DIR"/grub_cereus.cfg
 
     mkdir -p "$GRUB_DIR"/fonts
 
