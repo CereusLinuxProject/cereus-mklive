@@ -101,7 +101,7 @@ usage() {
 	                    Platforms to enable for aarch64 EFI ISO images (available: pinebookpro, x13s)
 	 -T <title>         Modify the bootloader title (default: Cereus Linux)
 	 -v linux<version>  Install a custom Linux version on ISO image (default: linux-default-cereus metapackage).
-	                    Also accepts linux metapackages (linux-mainline, linux-lts).
+	                    Also accepts linux metapackages (like linux-legacy-cereus or linux-mainline-cereus).
 	 -K                 Do not remove builddir
 	 -h                 Show this help and exit
 	 -V                 Show version and exit
@@ -659,23 +659,31 @@ copy_xbps_keys "$CEREUSTARGETDIR"
 # shellcheck disable=SC2086
 XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY} -S
 
+# Get the default kernel metapackage for the target arch
+case "$TARGET_ARCH" in
+    i686) DEFAULT_KERNEL_METAPKG="linux-legacy-cereus";;
+    x86_64*) DEFAULT_KERNEL_METAPKG="linux-default-cereus";;
+esac
+
 # Get linux version for ISO
 # If linux version option specified use
 shopt -s extglob
 case "$LINUX_VERSION" in
     linux+([0-9.]))
-        IGNORE_PKGS+=(linux)
+        IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
         PACKAGE_LIST+=("$LINUX_VERSION" linux-base)
-        ;;
+    ;;
     linux-@(default|legacy|mainline)-cereus)
-	IGNORE_PKGS+=(linux)
-	PACKAGE_LIST+=("$LINUX_VERSION")
-	# shellcheck disable=SC2030
-	# shellcheck disable=SC2086
+        if [ "$LINUX_VERSION" != "$DEFAULT_KERNEL_METAPKG" ]; then
+            IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
+        fi
+        PACKAGE_LIST+=("$LINUX_VERSION")
+        # shellcheck disable=SC2030
+        # shellcheck disable=SC2086
         LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
 	;;
     linux-@(mainline|lts))
-        IGNORE_PKGS+=(linux)
+        IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
         PACKAGE_LIST+=("$LINUX_VERSION")
         # shellcheck disable=SC2030
         # shellcheck disable=SC2031
@@ -687,7 +695,7 @@ case "$LINUX_VERSION" in
         PACKAGE_LIST+=(linux-asahi linux-base)
         ;;
     linux)
-        PACKAGE_LIST+=(linux)
+        IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
         # shellcheck disable=SC2030
         # shellcheck disable=SC2031
         # shellcheck disable=SC2086
@@ -711,7 +719,7 @@ if [ "$LINUX_VERSION" = linux-asahi ]; then
     KERNELVERSION="${KERNELVERSION%%_*}-asahi_${KERNELVERSION##*_}"
 fi
 
-: "${OUTPUT_FILE="cereus-beta-live-${TARGET_ARCH}-${KERNELVERSION}-$(date -u +%Y.%m%.d).iso"}"
+: "${OUTPUT_FILE="cereus-beta-live-${TARGET_ARCH}-${KERNELVERSION}-$(date -u +%Y.%m.%d).iso"}"
 
 print_step "Installing software to generate the image: ${REQUIRED_PKGS[*]} ..."
 install_prereqs "${REQUIRED_PKGS[@]}"
