@@ -170,7 +170,7 @@ else
     info_msg "Selecting u-boot bootloader"
     bootloader_pkg=uboot-mkimage
 fi
-run_cmd_target "xbps-install $XBPS_CONFFILE $XBPS_CACHEDIR $XBPS_REPOSITORY -r $ROOTFS -Sy ${KERNELPKG-linux} dracut binutils dracut-network dialog ${INITRAMFS_COMPRESSION-xz} ${bootloader_pkg}"
+run_cmd_target "xbps-install $XBPS_CONFFILE $XBPS_CACHEDIR $XBPS_REPOSITORY -r $ROOTFS -Sy ${KERNELPKG-linux} dracut binutils dracut-network dialog jq ${INITRAMFS_COMPRESSION-xz} ${bootloader_pkg}"
 run_cmd_chroot "$ROOTFS" "xbps-reconfigure -a"
 
 # Dracut needs to know the kernel version that will be using this
@@ -261,7 +261,7 @@ else
 fi
 
 # Compress the artifacts for distribution
-OUTPUT_FILE="cereus-beta-${XBPS_TARGET_ARCH}-NETBOOT-$(date +%Y.%m.%d).tar.gz"
+OUTPUT_FILE="cereus-beta-${XBPS_TARGET_ARCH}-NETBOOT-$(date -u +%Y.%m.%d).tar.gz"
 info_msg "Compressing results to $OUTPUT_FILE"
 cd "$BOOT_DIR" || die "Could not enter image dir"
 tar -zcvf "$CURDIR/$OUTPUT_FILE" .

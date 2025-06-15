@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -eu
 
@@ -14,7 +14,7 @@ REPO_NONFREE=
 REPO_MULTILIB=
 REPO_MULTILIB_NONFREE=
 SU_PKG=sudo
-DATE=$(date +%Y.%m.%d)
+DATE=$(date -u +%Y.%m.%d)
 
 usage() {
 	cat <<-EOH
@@ -24,7 +24,7 @@ usage() {
 	Adds cereus-installer and other helpful utilities to the generated images.
 
 	OPTIONS
-	 -a <arch>     Set XBPS_ARCH in the image
+	 -a <arch>     Set architecture (or platform) in the image
 	 -b <variant>  One of base, lxqt, xfce, cinnamon, plasma, fluxbox, or i3wm
 	               (default: base). May be specified multiple times to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYY.MM.DD format)
@@ -68,8 +68,27 @@ cleanup() {
     rm -rf "$INCLUDEDIR"
 }
 
+include_installer() {
+    if [ -x installer.sh ]; then
+        MKLIVE_VERSION="$(PROGNAME='' version)"
+        installer=$(mktemp)
+        sed "s/@@MKLIVE_VERSION@@/${MKLIVE_VERSION}/" installer.sh > "$installer"
+        install -Dm755 "$installer" "$INCLUDEDIR"/usr/bin/cereus-installer
+        rm "$installer"
+    else
+        echo installer.sh not found >&2
+        exit 1
+    fi
+}
+
 setup_pipewire() {
     PKGS="$PKGS pipewire alsa-pipewire"
+    case "$ARCH" in
+        asahi*)
+            PKGS="$PKGS asahi-audio"
+            SERVICES="$SERVICES speakersafetyd"
+            ;;
+    esac
     mkdir -p "$INCLUDEDIR"/etc/xdg/autostart
     ln -sf /usr/share/applications/pipewire.desktop "$INCLUDEDIR"/etc/xdg/autostart/
     mkdir -p "$INCLUDEDIR"/etc/pipewire/pipewire.conf.d
@@ -83,13 +102,46 @@ setup_pipewire() {
 build_variant() {
     variant="$1"
     shift
-    CEREUS_INCLUDEDIR="$PWD/includedir"
     IMG=cereus-beta-live-${ARCH}-${variant}-${DATE}.iso
-    GRUB_PKGS="grub-cereus-i386-efi grub-cereus-x86_64-efi"
+
+    # el-cheapo installer is unsupported on arm because arm doesn't install a kernel by default
+    # and to work around that would add too much complexity to it
+    # thus everyone should just do a chroot install anyways
+    WANT_INSTALLER=no
+    case "$ARCH" in
+        x86_64*|i686*)
+            GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
+            GFX_PKGS="xorg-video-drivers xf86-video-intel"
+            GFX_WL_PKGS="mesa-dri"
+            WANT_INSTALLER=yes
+            TARGET_ARCH="$ARCH"
+            ;;
+        aarch64*)
+            GRUB_PKGS="grub-arm64-efi"
+            GFX_PKGS="xorg-video-drivers"
+            GFX_WL_PKGS="mesa-dri"
+            TARGET_ARCH="$ARCH"
+            ;;
+        asahi*)
+            GRUB_PKGS="asahi-base asahi-scripts grub-arm64-efi"
+            GFX_PKGS="mesa-asahi-dri"
+            GFX_WL_PKGS="mesa-asahi-dri"
+            KERNEL_PKG="linux-asahi"
+            TARGET_ARCH="aarch64${ARCH#asahi}"
+            if [ "$variant" = xfce ]; then
+                info_msg "xfce is not supported on asahi, switching to xfce-wayland"
+                variant="xfce-wayland"
+            fi
+            ;;
+    esac
+
+    CEREUS_INCLUDEDIR="$PWD/includedir"
     A11Y_PKGS="espeakup void-live-audio brltty"
     ARCH_PKGS=""
-    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony xtools-minimal $A11Y_PKGS $SU_PKG $GRUB_PKGS"
-    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
+    PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony tmux xtools-minimal $A11Y_PKGS $SU_PKG $GRUB_PKGS"
+    FONTS="font-misc-misc terminus-font dejavu-fonts-ttf"
+    WAYLAND_PKGS="$GFX_WL_PKGS $FONTS orca"
+    XORG_PKGS="$GFX_PKGS $FONTS xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth orca"
     SERVICES="sshd chronyd"
 
 # Declare base repositories url
@@ -130,7 +182,7 @@ esac
     LIGHTDM_SESSION=''
 
     case $variant in
-        base) 
+        base)
             SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
 	;;
         lxqt)
@@ -175,11 +227,27 @@ esac
     if [ -n "$LIGHTDM_SESSION" ]; then
         mkdir -p "$INCLUDEDIR"/etc/lightdm
         echo "$LIGHTDM_SESSION" > "$INCLUDEDIR"/etc/lightdm/.session
+        # needed to show the keyboard layout menu on the login screen
+        cat <<- EOF > "$INCLUDEDIR"/etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+indicators = ~host;~spacer;~clock;~spacer;~layout;~session;~a11y;~power
+EOF
+    fi
+
+    if [ "$WANT_INSTALLER" = yes ]; then
+        include_installer
+    else
+        mkdir -p "$INCLUDEDIR"/usr/bin
+        printf "#!/bin/sh\necho 'cereus-installer is not supported on this live image'\n" > "$INCLUDEDIR"/usr/bin/cereus-installer
+        chmod 755 "$INCLUDEDIR"/usr/bin/cereus-installer
     fi
 
     if [ "$variant" != base ]; then
         setup_pipewire
     fi
+
+#    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" \
+#        ${KERNEL_PKG:+-v $KERNEL_PKG} ${REPO} "$@"
 
     DEFAULT_REPOS="-r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}""
     echo "${DEFAULT_REPOS}"
@@ -193,22 +261,8 @@ if [ ! -x mklive.sh ]; then
     exit 1
 fi
 
-if [ -x installer.sh ]; then
-    MKLIVE_VERSION="$(PROGNAME='' version)"
-    installer=$(mktemp)
-    sed "s/@@MKLIVE_VERSION@@/${MKLIVE_VERSION}/" installer.sh > "$installer"
-    install -Dm755 "$installer" "$INCLUDEDIR"/usr/bin/cereus-installer
-    rm "$installer"
-else
-    echo installer.sh not found >&2
-    exit 1
-fi
-
 if [ -n "$TRIPLET" ]; then
-    VARIANT="${TRIPLET##*-}"
-    REST="${TRIPLET%-*}"
-    DATE="${REST##*-}"
-    ARCH="${REST%-*}"
+    IFS=: read -r ARCH DATE VARIANT _ < <( echo "$TRIPLET" | sed -Ee 's/^(.+)-([0-9rc]+)-(.+)$/\1:\2:\3/' )
     build_variant "$VARIANT" "$@"
 else
     for image in $IMAGES; do

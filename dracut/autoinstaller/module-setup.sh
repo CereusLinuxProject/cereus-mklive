@@ -11,7 +11,6 @@ depends() {
 }
 
 install() {
-    inst /usr/bin/awk
     inst /usr/bin/chmod
     inst /usr/bin/chroot
     inst /usr/bin/clear
@@ -21,6 +20,7 @@ install() {
     inst /usr/bin/dhclient-script
     inst /usr/bin/halt
     inst /usr/bin/install
+    inst /usr/bin/jq
     inst /usr/bin/lsblk
     inst /usr/bin/mkdir
     inst /usr/bin/mkfs.ext4
@@ -40,5 +40,6 @@ install() {
     inst /etc/ssl/certs.pem
 
     inst_hook pre-mount 01 "$moddir/install.sh"
+    inst_hook cmdline 99 "$moddir/parse-vai-root.sh"
     inst "$moddir/autoinstall.cfg" /etc/autoinstall.default
 }

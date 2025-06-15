@@ -38,6 +38,8 @@ if [ -r "${NEWROOT}/etc/lightdm/lightdm.conf" ]; then
         "${NEWROOT}/etc/lightdm/lightdm.conf"
     sed -i -e "s|^\#\(autologin-session=\).*|\1$(cat "${NEWROOT}/etc/lightdm/.session")|" \
         "${NEWROOT}/etc/lightdm/lightdm.conf"
+    sed -i -e "s|^\#\(user-session=\).*|\1$(cat "${NEWROOT}/etc/lightdm/.session")|" \
+        "${NEWROOT}/etc/lightdm/lightdm.conf"
     # If numlockx is installed, enable it on greeter.
     if [ -x ${NEWROOT}/usr/bin/numlockx ]; then
         sed -i -e "s|^\#\(greeter-setup-script=\).*|\1/usr/bin/numlockx on|" \
