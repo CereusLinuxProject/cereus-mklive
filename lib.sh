@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This contains the COMPLETE list of binaries that this script needs
 # to function.  The only exception is the QEMU binary since it is not
@@ -318,17 +318,32 @@ rk33xx_flash_uboot() {
     dd if="${dir}/u-boot.itb" of="${dev}" seek=16384 conv=notrunc,fsync >/dev/null 2>&1
 }
 
-# These should all resolve even if they won't have the appropriate
-# repodata files for the selected architecture.
-: "${XBPS_REPOSITORY:=--repository=https://repo-default.voidlinux.org/current \
-                      --repository=https://repo-default.voidlinux.org/current/musl \
-                      --repository=https://repo-default.voidlinux.org/current/aarch64 \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/x86_64 \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/x86_64 \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/i686 \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/i686 \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-core/x86_64-musl \
-                      --repository=https://sourceforge.net/projects/cereus-linux/files/repos/cereus-extra/x86_64-musl}"
+set_repos() {
+# Declare base repositories url
+: "${VOID_REPO:=https://repo-default.voidlinux.org/current}"
+: "${CEREUS_REPO:=https://sourceforge.net/projects/cereus-linux/files/repos}"
+
+case "${TARGET_ARCH}" in
+    x86_64)
+        VOID_SUBREPOS=("${VOID_REPO}"/{,{multilib{,/nonfree},nonfree}})
+    ;;
+    *-musl)
+        VOID_SUBREPOS=("${VOID_REPO}"/musl{,/nonfree})
+        ;;
+    i686)
+        VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
+        ;;
+    aarch64)
+        VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
+        ;;
+esac
+
+# shellcheck disable=SC2048
+for repo in ${VOID_SUBREPOS[*]} \
+    "${CEREUS_REPO}"/cereus-{core,extra}/"${TARGET_ARCH}"; do
+        XBPS_REPOSITORY+=("--repository $repo")
+done
+}
 
 # This library is the authoritative source of the platform map,
 # because of this we may need to get this information from the command
