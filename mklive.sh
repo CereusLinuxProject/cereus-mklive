@@ -133,7 +133,7 @@ install_prereqs() {
 
 install_target_pkgs() {
     # shellcheck disable=SC2086
-	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY} \
+	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
 	fi
@@ -165,8 +165,8 @@ install_packages() {
 			die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
 	fi
 
-    xbps-reconfigure -r "$ROOTFS" -f base-files >/dev/null 2>&1
-    chroot "$ROOTFS" env -i xbps-reconfigure -f base-files
+    xbps-reconfigure -r "$ROOTFS" -f base-files-cereus >/dev/null 2>&1
+    chroot "$ROOTFS" env -i xbps-reconfigure -f base-files-cereus
 
     # Enable choosen UTF-8 locale and generate it into the target rootfs.
     if [ -f "$ROOTFS"/etc/default/libc-locales ]; then
@@ -442,8 +442,8 @@ EOF
 			build_grub_image i386 ia32
 			build_grub_image x86_64 x64
 			# include memtest86+
-			if [ -e "$VOIDTARGETDIR"/boot/memtest86+/memtest.efi ]; then
-				cp "$VOIDTARGETDIR"/boot/memtest86+/memtest.efi "$BOOT_DIR"
+			if [ -e "$CEREUSTARGETDIR"/boot/memtest86+/memtest.efi ]; then
+				cp "$CEREUSTARGETDIR"/boot/memtest86+/memtest.efi "$BOOT_DIR"
 			fi
 			;;
 		aarch64*)
