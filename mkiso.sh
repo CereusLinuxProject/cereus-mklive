@@ -126,7 +126,10 @@ build_variant() {
             GRUB_PKGS="asahi-base asahi-scripts grub-arm64-efi"
             GFX_PKGS="mesa-asahi-dri"
             GFX_WL_PKGS="mesa-asahi-dri"
+            # Intentionally unused but preserved just in case
+            # shellcheck disable=SC2034
             KERNEL_PKG="linux-asahi"
+            # shellcheck disable=SC2034
             TARGET_ARCH="aarch64${ARCH#asahi}"
             if [ "$variant" = xfce ]; then
                 info_msg "xfce is not supported on asahi, switching to xfce-wayland"
@@ -140,6 +143,8 @@ build_variant() {
     ARCH_PKGS=""
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse nano rsync zstd cereus-repo-core cereus-repo-extra chrony tmux xtools-minimal $A11Y_PKGS $SU_PKG $GRUB_PKGS"
     FONTS="font-misc-misc terminus-font dejavu-fonts-ttf"
+    # Not required for now, but leaving here just in case
+    # shellcheck disable=SC2034
     WAYLAND_PKGS="$GFX_WL_PKGS $FONTS orca"
     XORG_PKGS="$GFX_PKGS $FONTS xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth orca"
     SERVICES="sshd chronyd"
@@ -171,13 +176,13 @@ case ${ARCH} in
         REPO_NONFREE="${VOID_REPO}/nonfree"
         REPO_MULTILIB="${VOID_REPO}/multilib"
         REPO_MULTILIB_NONFREE="${VOID_REPO}/multilib/nonfree"
-        sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
+        sed -i 's/musl/libc/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
     *-musl)
         REPO_NONFREE="${VOID_REPO}/musl/nonfree"
-        sed -i 's/libc/musl/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
+        sed -i 's/libc/musl/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
     i686)
         REPO_NONFREE="${VOID_REPO}/nonfree"
-        sed -i 's/musl/libc/g' ${CEREUS_INCLUDEDIR}/*/etc/calamares/modules/locale.conf;;
+        sed -i 's/musl/libc/g' "${CEREUS_INCLUDEDIR}"/*/etc/calamares/modules/locale.conf;;
 esac
     LIGHTDM_SESSION=''
 
@@ -249,8 +254,10 @@ EOF
 #    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" \
 #        ${KERNEL_PKG:+-v $KERNEL_PKG} ${REPO} "$@"
 
-    DEFAULT_REPOS="-r "${REPO_CORE}" -r "${REPO_EXTRA}" -r "${REPO_NONFREE}" -r "${REPO_MULTILIB}" -r "${REPO_MULTILIB_NONFREE}""
+    DEFAULT_REPOS="-r ${REPO_CORE} -r ${REPO_EXTRA} -r ${REPO_NONFREE} -r ${REPO_MULTILIB} -r ${REPO_MULTILIB_NONFREE}"
     echo "${DEFAULT_REPOS}"
+    # Intentionally unquotting repositories variables
+    # shellcheck disable=SC2086
     ./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" -I "$CEREUS_INCLUDEDIR/${variant}" ${DEFAULT_REPOS} ${REPO} "$@"
 
 	cleanup
