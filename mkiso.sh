@@ -175,7 +175,7 @@ esac
             SERVICES+=(dhcpcd wpa_supplicant acpid)
 	;;
         lxqt)
-            PKGS+=(cereus-lxqt-presets lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad)
+            PKGS+=(lxqt-cereus lightdm lightdm-gtk-greeter-cereus lightdm-gtk-greeter-settings-cereus cereus-lightdm-presets qlipper strawberry galculator-gtk3 qpdfview FeatherPad)
             SERVICES=(acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed lightdm)
             LIGHTDM_SESSION=lxqt
         ;;
