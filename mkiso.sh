@@ -8,6 +8,7 @@ PROGNAME=$(basename "$0")
 ARCH=$(uname -m)
 IMAGES="base xfce lxqt cinnamon plasma fluxbox i3wm lxde"
 TRIPLET=
+KERNEL_CMDARGS=
 SU_PKG=sudo
 DATE=$(date -u +%Y.%m.%d)
 
@@ -165,9 +166,10 @@ esac
 
     LIGHTDM_SESSION=''
 
-    # Append them only if the variant is not base
     if [ "$variant" != base ]; then
         PKGS+=("${CEREUS_BASEPKGS[*]}" "${XORG_PKGS[*]}")
+        KERNEL_CMDARGS="quiet splash"
+        setup_pipewire
     fi
 
     case "$variant" in
@@ -227,13 +229,9 @@ esac
         chmod 755 "$INCLUDEDIR"/usr/bin/cereus-installer
     fi
 
-    if [ "$variant" != base ]; then
-        setup_pipewire
-    fi
-
     # Intentionally unquotting repositories variables
     # shellcheck disable=SC2086
-    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "${PKGS[*]}" -S "${SERVICES[*]}" -I "$INCLUDEDIR" -I "$CEREUS_INCLUDEDIR/${variant}" "${ADDITIONAL_REPO[*]}" "$@"
+    ./mklive.sh -a "$TARGET_ARCH" -o "$IMG" -p "${PKGS[*]}" -S "${SERVICES[*]}" -I "$INCLUDEDIR" -I "$CEREUS_INCLUDEDIR/${variant}" -C "${KERNEL_CMDARGS}" "${ADDITIONAL_REPO[*]}" "$@"
 
 	cleanup
 }
