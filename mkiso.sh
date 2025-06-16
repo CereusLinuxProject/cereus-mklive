@@ -105,7 +105,7 @@ build_variant() {
     FONTS=(font-misc-misc terminus-font dejavu-fonts-ttf)
     # Not required for now, but leaving here just in case
     # shellcheck disable=SC2034
-    WAYLAND_PKGS=("$GFX_WL_PKGS" "${FONTS[*]}" orca)
+    WAYLAND_PKGS=("${FONTS[*]}" orca)
     XORG_PKGS=("${FONTS[*]}" xorg-minimal xorg-input-drivers xorg-video-drivers-cereus setxkbmap xauth orca)
     SERVICES=(sshd chronyd)
 
@@ -117,6 +117,7 @@ build_variant() {
         x86_64*|i686*)
             PKGS+=(grub-i386-efi grub-x86_64-efi)
             XORG_PKGS+=(xorg-video-drivers xf86-video-intel)
+            # GFX_WL_PKGS
             WAYLAND_PKGS+=(mesa-dri)
             WANT_INSTALLER=yes
             TARGET_ARCH="$ARCH"
