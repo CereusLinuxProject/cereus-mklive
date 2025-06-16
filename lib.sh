@@ -323,25 +323,30 @@ set_repos() {
 : "${VOID_REPO:=https://repo-default.voidlinux.org/current}"
 : "${CEREUS_REPO:=https://sourceforge.net/projects/cereus-linux/files/repos}"
 
-case "${TARGET_ARCH}" in
-    x86_64)
-        VOID_SUBREPOS=("${VOID_REPO}"/{,{multilib{,/nonfree},nonfree}})
-    ;;
-    *-musl)
-        VOID_SUBREPOS=("${VOID_REPO}"/musl{,/nonfree})
-        ;;
-    i686)
-        VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
-        ;;
-    aarch64)
-        VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
-        ;;
-esac
+for _ARCH in "${HOST_ARCH}" "${TARGET_ARCH}"; do
+    case "${_ARCH}" in
+        x86_64)
+            VOID_SUBREPOS=("${VOID_REPO}"/{,{multilib{,/nonfree},nonfree}})
+            ;;
+        *-musl)
+            VOID_SUBREPOS=("${VOID_REPO}"/musl{,/nonfree})
+            ;;
+        i686)
+            VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
+            ;;
+        aarch64)
+            VOID_SUBREPOS=("${VOID_REPO}"/{,nonfree})
+            ;;
+    esac
 
-# shellcheck disable=SC2048
-for repo in ${VOID_SUBREPOS[*]} \
-    "${CEREUS_REPO}"/cereus-{core,extra}/"${TARGET_ARCH}"; do
-        XBPS_REPOSITORY+=("--repository $repo")
+    # shellcheck disable=SC2048
+    for repo in ${VOID_SUBREPOS[*]} \
+        "${CEREUS_REPO}"/cereus-{core,extra}/"${_ARCH}"; do
+            case "${_ARCH}" in
+                "${TARGET_ARCH}") TARGET_REPOSITORIES+=("--repository $repo");;
+                "${HOST_ARCH}") HOST_REPOSITORIES+=("--repository $repo");;
+            esac
+    done
 done
 }
 

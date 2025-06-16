@@ -126,7 +126,7 @@ copy_autoinstaller_files() {
 install_prereqs() {
     # shellcheck disable=SC2048
     # shellcheck disable=SC2086
-	if ! XBPS_ARCH="$HOST_ARCH" "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY[*]} \
+	if ! XBPS_ARCH="$HOST_ARCH" "$XBPS_INSTALL_CMD" -r "$CEREUSHOSTDIR" ${HOST_REPOSITORIES[*]} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${REQUIRED_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
     fi
@@ -135,7 +135,7 @@ install_prereqs() {
 install_target_pkgs() {
     # shellcheck disable=SC2086
     # shellcheck disable=SC2048
-	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY[*]} \
+	if ! XBPS_ARCH=$TARGET_ARCH "$XBPS_INSTALL_CMD" -r "$CEREUSTARGETDIR" ${TARGET_REPOSITORIES[*]} \
 		-c "$XBPS_HOST_CACHEDIR" -y "${TARGET_PKGS[@]}"; then
 			die "Failed to install required software, exiting..."
 	fi
@@ -156,7 +156,7 @@ install_packages() {
     # shellcheck disable=SC2086
     # shellcheck disable=SC2048
     if ! XBPS_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -r "$ROOTFS" \
-        ${XBPS_REPOSITORY[*]} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+        ${TARGET_REPOSITORIES[*]} -c "$XBPS_CACHEDIR" -yn "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Missing required binary packages, exiting..."
 	fi
 
@@ -165,7 +165,7 @@ install_packages() {
     # shellcheck disable=SC2086
     # shellcheck disable=SC2048
     if ! LANG=C XBPS_TARGET_ARCH=$TARGET_ARCH "${XBPS_INSTALL_CMD}" -U -r "$ROOTFS" \
-        ${XBPS_REPOSITORY[*]} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
+        ${TARGET_REPOSITORIES[*]} -c "$XBPS_CACHEDIR" -y "${PACKAGE_LIST[@]}" "${INITRAMFS_PKGS[@]}"; then
 			die "Failed to install ${PACKAGE_LIST[*]} ${INITRAMFS_PKGS[*]}"
 	fi
 
@@ -663,15 +663,15 @@ print_step "Synchronizing XBPS repository data..."
 copy_xbps_keys "$ROOTFS"
 # shellcheck disable=SC2048
 # shellcheck disable=SC2086
-XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]} -S
+XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$ROOTFS" ${TARGET_REPOSITORIES[*]} -S
 copy_xbps_keys "$CEREUSHOSTDIR"
 # shellcheck disable=SC2048
 # shellcheck disable=SC2086
-XBPS_ARCH=$HOST_ARCH $XBPS_INSTALL_CMD -r "$CEREUSHOSTDIR" ${XBPS_REPOSITORY[*]} -S
+XBPS_ARCH=$HOST_ARCH $XBPS_INSTALL_CMD -r "$CEREUSHOSTDIR" ${HOST_REPOSITORIES[*]} -S
 copy_xbps_keys "$CEREUSTARGETDIR"
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${XBPS_REPOSITORY[*]} -S
+XBPS_ARCH=$TARGET_ARCH $XBPS_INSTALL_CMD -r "$CEREUSTARGETDIR" ${TARGET_REPOSITORIES[*]} -S
 
 # Get the default kernel metapackage for the target arch
 case "$TARGET_ARCH" in
@@ -695,7 +695,7 @@ case "$LINUX_VERSION" in
         # shellcheck disable=SC2030
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${TARGET_REPOSITORIES[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
 	;;
     linux-@(mainline|lts))
         IGNORE_PKGS+=("$DEFAULT_KERNEL_METAPKG")
@@ -704,7 +704,7 @@ case "$LINUX_VERSION" in
         # shellcheck disable=SC2031
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${TARGET_REPOSITORIES[*]:=-R} -x "$LINUX_VERSION" | grep 'linux[0-9._]\+')"
         ;;
     linux-asahi)
         IGNORE_PKGS+=(linux)
@@ -716,7 +716,7 @@ case "$LINUX_VERSION" in
         # shellcheck disable=SC2031
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
-        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -x linux | grep 'linux[0-9._]\+')"
+        LINUX_VERSION="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${TARGET_REPOSITORIES[*]:=-R} -x linux | grep 'linux[0-9._]\+')"
         ;;
     *)
         die "-v option must be in format linux<version> or linux-<series>"
@@ -728,7 +728,7 @@ shopt -u extglob
 # shellcheck disable=SC2031
 # shellcheck disable=SC2086
 # shellcheck disable=SC2048
-_kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${XBPS_REPOSITORY[*]:=-R} -p pkgver $LINUX_VERSION)"
+_kver="$(XBPS_ARCH=$TARGET_ARCH $XBPS_QUERY_CMD -r "$ROOTFS" ${TARGET_REPOSITORIES[*]:=-R} -p pkgver $LINUX_VERSION)"
 if ! KERNELVERSION=$($XBPS_UHELPER_CMD getpkgversion "${_kver}"); then
     die "Failed to find kernel package version"
 fi
