@@ -115,7 +115,7 @@ build_variant() {
     WANT_INSTALLER=no
     case "$ARCH" in
         x86_64*|i686*)
-            PKGS+=(grub-i386-efi grub-x86_64-efi)
+            PKGS+=(grub-cereus-i386-efi grub-cereus-x86_64-efi)
             XORG_PKGS+=(xorg-video-drivers xf86-video-intel)
             # GFX_WL_PKGS
             WAYLAND_PKGS+=(mesa-dri)
