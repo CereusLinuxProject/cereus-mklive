@@ -6,7 +6,7 @@ set -eu
 
 PROGNAME=$(basename "$0")
 ARCH=$(uname -m)
-IMAGES="base xfce lxqt cinnamon plasma fluxbox i3wm lxde"
+IMAGES="base xfce lxqt cinnamon plasma"
 TRIPLET=
 KERNEL_CMDARGS=
 SU_PKG=sudo
@@ -21,7 +21,7 @@ usage() {
 
 	OPTIONS
 	 -a <arch>     Set architecture (or platform) in the image
-	 -b <variant>  One of base, lxqt, xfce, cinnamon, plasma, fluxbox, or i3wm
+	 -b <variant>  One of base, lxqt, xfce, cinnamon or plasma
 	               (default: base). May be specified multiple times to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYY.MM.DD format)
 	 -t <arch-date-variant>
@@ -196,19 +196,6 @@ esac
             PKGS+=(kde5 konsole dolphin sddm print-manager ark strawberry kate5 kcalc udisks2 okular spectacle)
             SERVICES=(acpid dbus elogind bluetoothd NetworkManager polkitd cupsd cups-browsed sddm)
         ;;
-        # UNOFFICIAL EDITIONS (INCOMPLETE)
-        fluxbox)
-            PKGS+=(fluxbox tint2 lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus pasystray rofi udevil xfce4-notifyd xfce4-pulseaudio-plugin ksuperkey xed-xapps audacious rxvt-unicode lxappearance qt5ct playerctl nitrogen blueman betterlockscreen clipit lxqt-policykit ksuperkey flameshot brillo skippy-xd pavucontrol nemo nemo-emblems nemo-fileroller nemo-image-converter nemo-preview nemo-python nemo-compare nemo-audio-tab galculator-gtk3 fbmenugen sierra-dark-fluxbox-theme arandr xidlehook picom picom-manager)
-            SERVICES+=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed)
-            ;;
-        i3wm)
-            PKGS+=(lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus i3)
-            SERVICES+=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty)
-            ;;
-        lxde)
-            PKGS+=(lxde lightdm-gtk3-greeter-cereus lightdm-gtk-greeter-settings-cereus gvfs-afc gvfs-mtp gvfs-smb udisks)
-            SERVICES=(acpid dbus bluetoothd NetworkManager polkitd cupsd cups-browsed emptty)
-            ;;
         *)
             >&2 echo "Unknown variant $variant"
             exit 1
