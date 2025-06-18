@@ -544,7 +544,7 @@ while getopts "a:b:r:c:C:T:Kk:l:i:I:S:e:s:o:p:g:v:P:Vh" opt; do
 	case $opt in
 		a) TARGET_ARCH="$OPTARG";;
 		b) BASE_SYSTEM_PKG="$OPTARG";;
-		r) XBPS_REPOSITORY+=(--repository=$OPTARG);;
+		r) TARGET_REPOSITORIES+=(--repository=$OPTARG);;
 		c) XBPS_CACHEDIR="$OPTARG";;
 		g) IGNORE_PKGS+=($OPTARG) ;;
 		K) readonly KEEP_BUILDDIR=1;;
